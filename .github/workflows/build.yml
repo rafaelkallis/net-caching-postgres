@@ -1,0 +1,84 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  build:
+    strategy:
+      matrix: 
+        os: [ubuntu-22.04, ubuntu-20.04]
+        dotnet: [6.0.x, 8.0.x]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ matrix.dotnet }}
+        cache: true
+        cache-dependency-path: '**/packages.lock.json'
+    
+    - name: Restore dependencies
+      run: dotnet restore --locked-mode
+    
+    - name: Build
+      run: >-
+        dotnet build 
+        --no-restore 
+        --configuration Debug
+    
+    - name: Test
+      run: >-
+        dotnet test 
+        --no-build 
+        --configuration Debug 
+        --verbosity normal
+        
+  release:
+    needs: build
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: nuget.org
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v4
+#        with:
+#          dotnet-version: 8.0x
+
+      - name: Pack
+        run: >-
+          dotnet pack
+          --configuration Release
+          --property:PackageOutputPath="$PWD/nupkgs"
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: nupkgs
+
+      - name: Publish to nuget.org
+        run: >-
+          dotnet nuget push "*.nupkg"
+          --api-key ${{ secrets.NUGET_ORG_API_KEY }} 
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+        working-directory: nupkgs

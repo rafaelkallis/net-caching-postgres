@@ -1,0 +1,19 @@
+{
+	"name": "library",
+	"image": "mcr.microsoft.com/devcontainers/base:debian",
+	"features": {
+		"ghcr.io/devcontainers/features/dotnet": "6.0"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csdevkit",
+				"jmrog.vscode-nuget-package-manager"
+			],
+			"settings": {}
+		}
+	},
+	"containerEnv": {
+		"DOTNET_CLI_TELEMETRY_OPTOUT": "true"
+	}
+}

@@ -1,0 +1,28 @@
+#services:
+#  postgres:
+#    image: "postgres:16"
+#    container_name: "idempotency-postgres"
+#    environment:
+#      POSTGRES_PASSWORD: "pAssw0rd"
+#    ports:
+#      - "127.0.0.1:5432:5432"
+#    volumes:
+#      - postgres:/var/lib/postgresql/data
+#  
+#  mssql:
+#    image: "mcr.microsoft.com/mssql/server:2022-latest"
+#    container_name: "idempotency-mssql"
+#    environment:
+#      SA_PASSWORD: "pAssw0rd"
+#      ACCEPT_EULA: "Y"
+#    ports:
+#      - "127.0.0.1:1433:1433"
+#    volumes:
+#      - mssql:/var/opt/mssql
+#
+#volumes:
+#  postgres:    
+#    name: "idempotency-postgres"
+#  mssql:
+#    name: "idempotency-mssql"
+  
