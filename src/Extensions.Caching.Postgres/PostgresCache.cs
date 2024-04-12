@@ -72,13 +72,25 @@ public sealed partial class PostgresCache : IDistributedCache
     /// <inheritdoc />
     public void Refresh(string key)
     {
-        throw new NotImplementedException();
+        using NpgsqlConnection connection = _npgsqlConnections.OpenConnection();
+        using NpgsqlCommand command = new(_sqlQueries.RefreshCacheItem(), connection);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, Options.SystemClock.UtcNow.DateTime.ToUnixTimeMilliseconds());
+        command.Prepare();
+        command.ExecuteNonQuery();
+        LogCacheItemRefreshed(_logger, key);
     }
 
     /// <inheritdoc />
-    public Task RefreshAsync(string key, CancellationToken token)
+    public async Task RefreshAsync(string key, CancellationToken token)
     {
-        throw new NotImplementedException();
+        await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlCommand command = new(_sqlQueries.RefreshCacheItem(), connection);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, Options.SystemClock.UtcNow.DateTime.ToUnixTimeMilliseconds());
+        await command.PrepareAsync(token);
+        await command.ExecuteNonQueryAsync(token);
+        LogCacheItemRefreshed(_logger, key);
     }
 
     /// <inheritdoc />
@@ -190,4 +202,7 @@ public sealed partial class PostgresCache : IDistributedCache
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Debug, Message = "The cache item with key {Key} was added.")]
     private static partial void LogCacheItemAdded(ILogger logger, string key);
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Debug, Message = "The cache item with key {Key} was refreshed.")]
+    private static partial void LogCacheItemRefreshed(ILogger logger, string key);
 }

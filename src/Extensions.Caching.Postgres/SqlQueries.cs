@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Options;
 
+using Npgsql;
+
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
 public class SqlQueries
@@ -14,29 +16,15 @@ public class SqlQueries
     public string Schema => _options.Value.SchemaName;
     public string TableName => _options.Value.TableName;
 
-    public string TableInfo() => $@"
-        SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_SCHEMA = '{Schema}'
-        AND TABLE_NAME = '{TableName}';";
-
-    public string UpdateCacheItem() => $@"
-        UPDATE ""{Schema}"".""{TableName}""
-        SET ""ExpiresAt"" =
-            (CASE
-            WHEN DATEDIFF(SECOND, $2, ""AbsoluteExpiration"") <= ""SlidingExpiration""
-            THEN ""AbsoluteExpiration""
-            ELSE
-            DATEADD(SECOND, ""SlidingExpiration"", $2)
-            END)
-        WHERE ""Key"" = $1
-        AND $2 <= ""ExpiresAt""
-        AND ""SlidingExpiration"" IS NOT NULL
-        AND (""AbsoluteExpiration"" IS NULL OR ""AbsoluteExpiration"" <> ""ExpiresAt"") ;";
-
     public string GetCacheItem() => $@"
-        SELECT ""Value""
-        FROM ""{Schema}"".""{TableName}"" 
+        UPDATE ""{Schema}"".""{TableName}"" 
+        SET ""ExpiresAt"" = LEAST(""AbsoluteExpiration"", $2 + ""SlidingExpiration"")
+        WHERE ""Key"" = $1 AND $2 <= ""ExpiresAt""
+        RETURNING ""Value"";";
+
+    public string RefreshCacheItem() => $@"
+        UPDATE ""{Schema}"".""{TableName}"" 
+        SET ""ExpiresAt"" = LEAST(""AbsoluteExpiration"", $2 + ""SlidingExpiration"")
         WHERE ""Key"" = $1 AND $2 <= ""ExpiresAt"";";
 
     public string SetCacheItem() => $@"

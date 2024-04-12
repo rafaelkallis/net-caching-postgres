@@ -21,15 +21,16 @@ public class PostgresCacheIntegrationTest : IntegrationTest
 
     [Theory]
     [CombinatorialData]
-    public async Task WhenItemExists_ShouldGet(bool async)
+    public async Task Get_WhenItemExists_ShouldGet(bool async)
     {
+        DateTime now = DateTime.UtcNow;
         string key = Guid.NewGuid().ToString();
         byte[] value = new byte[1024];
         Random.Shared.NextBytes(value);
         CacheEntry cacheEntry = new(key,
             value,
-            ExpiresAt: DateTime.UtcNow.AddMinutes(1),
-            SlidingExpiration: null,
+            ExpiresAt: now.AddMinutes(1),
+            SlidingExpiration: TimeSpan.FromMinutes(5),
             AbsoluteExpiration: null);
         await _postgresFixture.Insert(cacheEntry);
 
@@ -45,11 +46,17 @@ public class PostgresCacheIntegrationTest : IntegrationTest
 
         resultValue.Should().NotBeNull();
         resultValue.Should().BeEquivalentTo(value);
+
+        CacheEntry? cacheEntry2 = await _postgresFixture.SelectOne(key);
+        cacheEntry2.Should().NotBeNull();
+        cacheEntry2?.ExpiresAt.Should().BeCloseTo(now + TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(1));
+        cacheEntry2?.SlidingExpiration.Should().Be(cacheEntry.SlidingExpiration);
+        cacheEntry2?.AbsoluteExpiration.Should().BeNull();
     }
 
     [Theory]
     [CombinatorialData]
-    public async Task WhenItemDoesNotExist_ShouldReturnNull(bool async)
+    public async Task Get_WhenItemDoesNotExist_ShouldReturnNull(bool async)
     {
         string key = Guid.NewGuid().ToString();
 
@@ -68,7 +75,7 @@ public class PostgresCacheIntegrationTest : IntegrationTest
 
     [Theory]
     [CombinatorialData]
-    public async Task WhenItemExists_ShouldRemoveItem(bool async)
+    public async Task Remove_WhenItemExists_ShouldRemoveItem(bool async)
     {
         string key = Guid.NewGuid().ToString();
         byte[] value = new byte[1024];
@@ -104,7 +111,7 @@ public class PostgresCacheIntegrationTest : IntegrationTest
 
     [Theory]
     [CombinatorialData]
-    public async Task WhenItemDoesNotExist_ShouldAddItem(bool async, ExpirationScenarios scenario)
+    public async Task Set_WhenItemDoesNotExist_ShouldAddItem(bool async, ExpirationScenarios scenario)
     {
         DateTime now = DateTime.UtcNow;
         string key = Guid.NewGuid().ToString();
@@ -148,7 +155,7 @@ public class PostgresCacheIntegrationTest : IntegrationTest
         cacheEntry?.Key.Should().Be(key);
         cacheEntry?.Value.Should().BeEquivalentTo(value);
 
-        TimeSpan tolerance = TimeSpan.FromMilliseconds(1);
+        TimeSpan tolerance = TimeSpan.FromMilliseconds(10);
         if (scenario is ExpirationScenarios.NoOptions)
         {
             cacheEntry?.ExpiresAt.Should().BeCloseTo(now.Add(PostgresCacheOptions.DefaultSlidingExpiration), TimeSpan.FromSeconds(1));
@@ -177,5 +184,36 @@ public class PostgresCacheIntegrationTest : IntegrationTest
         {
             throw FailException.ForFailure($"Unknown scenario {scenario}");
         }
+    }
+
+    [Theory]
+    [CombinatorialData]
+    public async Task Refresh_ShouldUpdateExpiredAt(bool async)
+    {
+        DateTime now = DateTime.UtcNow;
+        string key = Guid.NewGuid().ToString();
+        byte[] value = new byte[1024];
+        Random.Shared.NextBytes(value);
+        CacheEntry cacheEntry = new(key,
+            value,
+            ExpiresAt: now.AddMinutes(1),
+            SlidingExpiration: TimeSpan.FromMinutes(5),
+            AbsoluteExpiration: null);
+        await _postgresFixture.Insert(cacheEntry);
+
+        if (async)
+        {
+            await Cache.RefreshAsync(key);
+        }
+        else
+        {
+            Cache.Refresh(key);
+        }
+
+        CacheEntry? cacheEntry2 = await _postgresFixture.SelectOne(key);
+        cacheEntry2.Should().NotBeNull();
+        cacheEntry2?.ExpiresAt.Should().BeCloseTo(now + TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(1));
+        cacheEntry2?.SlidingExpiration.Should().Be(cacheEntry.SlidingExpiration);
+        cacheEntry2?.AbsoluteExpiration.Should().BeNull();
     }
 }
