@@ -1,3 +1,7 @@
+using Xunit.Sdk;
+
+using DistributedCacheEntryOptions = Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions;
+
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 
 [Collection(PostgresFixture.CollectionName)]
@@ -16,19 +20,18 @@ public class PostgresCacheIntegrationTest : IntegrationTest
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
+    [CombinatorialData]
     public async Task WhenItemExists_ShouldGet(bool async)
     {
         string key = Guid.NewGuid().ToString();
         byte[] value = new byte[1024];
         Random.Shared.NextBytes(value);
-        CacheItem cacheItem = new(key,
+        CacheEntry cacheEntry = new(key,
             value,
-            ExpiresAtTime: DateTimeOffset.UtcNow.AddMinutes(1),
-            SlidingExpirationInSeconds: null,
+            ExpiresAt: DateTime.UtcNow.AddMinutes(1),
+            SlidingExpiration: null,
             AbsoluteExpiration: null);
-        await _postgresFixture.Insert(cacheItem);
+        await _postgresFixture.Insert(cacheEntry);
 
         byte[]? resultValue;
         if (async)
@@ -45,8 +48,7 @@ public class PostgresCacheIntegrationTest : IntegrationTest
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
+    [CombinatorialData]
     public async Task WhenItemDoesNotExist_ShouldReturnNull(bool async)
     {
         string key = Guid.NewGuid().ToString();
@@ -65,19 +67,18 @@ public class PostgresCacheIntegrationTest : IntegrationTest
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
+    [CombinatorialData]
     public async Task WhenItemExists_ShouldRemoveItem(bool async)
     {
         string key = Guid.NewGuid().ToString();
         byte[] value = new byte[1024];
         Random.Shared.NextBytes(value);
-        CacheItem cacheItem = new(key,
+        CacheEntry cacheEntry = new(key,
             value,
-            ExpiresAtTime: DateTimeOffset.UtcNow.AddMinutes(1),
-            SlidingExpirationInSeconds: null,
+            ExpiresAt: DateTime.UtcNow.AddMinutes(1),
+            SlidingExpiration: null,
             AbsoluteExpiration: null);
-        await _postgresFixture.Insert(cacheItem);
+        await _postgresFixture.Insert(cacheEntry);
 
         if (async)
         {
@@ -88,7 +89,93 @@ public class PostgresCacheIntegrationTest : IntegrationTest
             Cache.Remove(key);
         }
 
-        CacheItem? cacheItem2 = await _postgresFixture.SelectOne(key);
+        CacheEntry? cacheItem2 = await _postgresFixture.SelectOne(key);
         cacheItem2.Should().BeNull();
+    }
+
+    public enum ExpirationScenarios
+    {
+        NoOptions,
+        Absolute,
+        AbsoluteRelativeToNow,
+        Sliding,
+        SlidingAndAbsolute,
+    }
+
+    [Theory]
+    [CombinatorialData]
+    public async Task WhenItemDoesNotExist_ShouldAddItem(bool async, ExpirationScenarios scenario)
+    {
+        DateTime now = DateTime.UtcNow;
+        string key = Guid.NewGuid().ToString();
+        byte[] value = new byte[1024];
+        Random.Shared.NextBytes(value);
+
+        TimeSpan sliding = TimeSpan.FromMinutes(1);
+        TimeSpan absolute = TimeSpan.FromMinutes(5);
+
+        DistributedCacheEntryOptions options = new();
+
+        if (scenario is ExpirationScenarios.Absolute or ExpirationScenarios.SlidingAndAbsolute)
+        {
+            options.AbsoluteExpiration = now + absolute;
+        }
+
+        if (scenario is ExpirationScenarios.AbsoluteRelativeToNow)
+        {
+            options.AbsoluteExpirationRelativeToNow = absolute;
+        }
+
+        if (scenario is ExpirationScenarios.Sliding or ExpirationScenarios.SlidingAndAbsolute)
+        {
+            options.SlidingExpiration = sliding;
+        }
+
+        Output.WriteLine("Options {0}", options);
+
+        if (async)
+        {
+            await Cache.SetAsync(key, value, options);
+        }
+        else
+        {
+            Cache.Set(key, value, options);
+        }
+
+        CacheEntry? cacheEntry = await _postgresFixture.SelectOne(key);
+        cacheEntry.Should().NotBeNull();
+
+        cacheEntry?.Key.Should().Be(key);
+        cacheEntry?.Value.Should().BeEquivalentTo(value);
+
+        TimeSpan tolerance = TimeSpan.FromMilliseconds(1);
+        if (scenario is ExpirationScenarios.NoOptions)
+        {
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(now.Add(PostgresCacheOptions.DefaultSlidingExpiration), TimeSpan.FromSeconds(1));
+            cacheEntry?.SlidingExpiration.Should().BeNull();
+            cacheEntry?.AbsoluteExpiration.Should().BeNull();
+        }
+        else if (scenario is ExpirationScenarios.Absolute or ExpirationScenarios.AbsoluteRelativeToNow)
+        {
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(now + absolute, tolerance);
+            cacheEntry?.SlidingExpiration.Should().BeNull();
+            cacheEntry?.AbsoluteExpiration.Should().BeCloseTo(now + absolute, tolerance);
+        }
+        else if (scenario is ExpirationScenarios.Sliding)
+        {
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(now + sliding, tolerance);
+            cacheEntry?.SlidingExpiration.Should().Be(sliding);
+            cacheEntry?.AbsoluteExpiration.Should().BeNull();
+        }
+        else if (scenario is ExpirationScenarios.SlidingAndAbsolute)
+        {
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(now + sliding, tolerance);
+            cacheEntry?.SlidingExpiration.Should().Be(sliding);
+            cacheEntry?.AbsoluteExpiration.Should().BeCloseTo(now + absolute, tolerance);
+        }
+        else
+        {
+            throw FailException.ForFailure($"Unknown scenario {scenario}");
+        }
     }
 }

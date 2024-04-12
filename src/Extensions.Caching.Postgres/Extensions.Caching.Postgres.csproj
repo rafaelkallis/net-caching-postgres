@@ -5,6 +5,10 @@
     <AssemblyName>RafaelKallis.Extensions.Caching.Postgres</AssemblyName>
     <RootNamespace>RafaelKallis.Extensions.Caching.Postgres</RootNamespace>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <InternalsVisibleTo Include="RafaelKallis.Extensions.Caching.Postgres.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

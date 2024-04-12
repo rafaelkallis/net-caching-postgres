@@ -42,27 +42,27 @@ public sealed class PostgresFixture : IAsyncLifetime
         return connection;
     }
 
-    public async Task Insert(CacheItem cacheItem, string schema = PostgresCacheConstants.DefaultSchema, string table = PostgresCacheConstants.DefaultTableName)
+    public async Task Insert(CacheEntry cacheEntry, string schema = PostgresCacheConstants.DefaultSchemaName, string table = PostgresCacheConstants.DefaultTableName)
     {
         string sql = $@"
             INSERT INTO ""{schema}"".""{table}""
-            (""Key"", ""Value"", ""ExpiresAtTime"", ""SlidingExpirationInSeconds"", ""AbsoluteExpiration"")
-            VALUES ($1,$2,$3,$4,$5);";
+            (""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration"")
+            VALUES ($1, $2, $3, $4, $5);";
         await using NpgsqlConnection connection = await OpenConnection();
         await using NpgsqlCommand command = new(sql, connection);
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, cacheItem.Key);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bytea, cacheItem.Value);
-        command.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, cacheItem.ExpiresAtTime);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheItem.SlidingExpirationInSeconds as object ?? DBNull.Value);
-        command.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, cacheItem.AbsoluteExpiration as object ?? DBNull.Value);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, cacheEntry.Key);
+        command.Parameters.AddWithValue(NpgsqlDbType.Bytea, cacheEntry.Value);
+        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheEntry.ExpiresAt.ToUnixTimeMilliseconds());
+        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheEntry.SlidingExpiration?.ToMilliseconds() as object ?? DBNull.Value);
+        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheEntry.AbsoluteExpiration?.ToUnixTimeMilliseconds() as object ?? DBNull.Value);
         await command.PrepareAsync();
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task<CacheItem?> SelectOne(string key, string schema = PostgresCacheConstants.DefaultSchema, string table = PostgresCacheConstants.DefaultTableName)
+    public async Task<CacheEntry?> SelectOne(string key, string schema = PostgresCacheConstants.DefaultSchemaName, string table = PostgresCacheConstants.DefaultTableName)
     {
         string sql = $@"
-            SELECT ""Key"", ""Value"", ""ExpiresAtTime"", ""SlidingExpirationInSeconds"", ""AbsoluteExpiration""
+            SELECT ""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration""
             FROM ""{schema}"".""{table}""
             WHERE ""Key"" = $1;";
         await using NpgsqlConnection connection = await OpenConnection();
@@ -75,12 +75,16 @@ public sealed class PostgresFixture : IAsyncLifetime
             return null;
         }
 
-        return new CacheItem(
-            dataReader.GetString(0),
-            dataReader.GetFieldValue<byte[]>(1),
-            dataReader.GetFieldValue<DateTimeOffset>(2),
-            dataReader.IsDBNull(3) ? null : dataReader.GetInt64(3),
-            dataReader.IsDBNull(4) ? null : dataReader.GetFieldValue<DateTimeOffset>(4));
+        return new CacheEntry(
+            Key: dataReader.GetString(0),
+            Value: dataReader.GetFieldValue<byte[]>(1),
+            ExpiresAt: dataReader.GetInt64(2).AsUnixTimeMillisecondsDateTime(),
+            SlidingExpiration: !dataReader.IsDBNull(3)
+                ? dataReader.GetInt64(3).AsMillisecondsTimeSpan()
+                : null,
+            AbsoluteExpiration: !dataReader.IsDBNull(4)
+                ? dataReader.GetInt64(4).AsUnixTimeMillisecondsDateTime()
+                : null);
     }
 
     public async Task InitializeAsync()

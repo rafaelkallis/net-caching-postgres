@@ -27,7 +27,7 @@ public class PostgresCacheDatabaseMigrator : IHostedService
         await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(cancellationToken);
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-        string schema = options.Value.Schema;
+        string schema = options.Value.SchemaName;
         string tableName = options.Value.TableName;
         string owner = options.Value.Owner;
         int idMaxLength = options.Value.KeyMaxLength;
@@ -38,15 +38,15 @@ public class PostgresCacheDatabaseMigrator : IHostedService
             CREATE TABLE IF NOT EXISTS ""{schema}"".""{tableName}"" (
                 ""Key"" VARCHAR({idMaxLength}) PRIMARY KEY,
                 ""Value"" BYTEA NOT NULL,
-                ""ExpiresAtTime"" TIMESTAMPTZ NOT NULL,
-                ""SlidingExpirationInSeconds"" BIGINT,
-                ""AbsoluteExpiration"" TIMESTAMPTZ
+                ""ExpiresAt"" BIGINT NOT NULL,
+                ""SlidingExpiration"" BIGINT,
+                ""AbsoluteExpiration"" BIGINT
             );
 
             ALTER TABLE ""{schema}"".""{tableName}"" OWNER TO {owner};
             ALTER TABLE ""{schema}"".""{tableName}"" ALTER COLUMN ""Key"" TYPE VARCHAR({idMaxLength});
 
-            CREATE INDEX IF NOT EXISTS ""IX_{tableName}_ExpiresAtTime"" ON ""{schema}"".""{tableName}"" (""ExpiresAtTime"");";
+            CREATE INDEX IF NOT EXISTS ""IX_{tableName}_ExpiresAt"" ON ""{schema}"".""{tableName}"" (""ExpiresAt"");";
 
         _logger.LogInformation("Executing SQL: {Sql}", sql);
         await using NpgsqlCommand command = new(cmdText: sql, connection, transaction);

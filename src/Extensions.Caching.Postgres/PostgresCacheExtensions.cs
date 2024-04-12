@@ -29,4 +29,16 @@ public static class PostgresCacheExtensions
 
         return services;
     }
+
+    internal static DateTime AsUnixTimeMillisecondsDateTime(this long unixTimeMilliseconds) =>
+        DateTime.UnixEpoch.AddMilliseconds(unixTimeMilliseconds);
+
+    internal static long ToUnixTimeMilliseconds(this DateTime dateTime) =>
+        dateTime.Subtract(DateTime.UnixEpoch).ToMilliseconds();
+
+    internal static TimeSpan AsMillisecondsTimeSpan(this long unixTimeMilliseconds) =>
+        TimeSpan.FromMilliseconds(Convert.ToDouble(unixTimeMilliseconds));
+
+    internal static long ToMilliseconds(this TimeSpan timeSpan) =>
+        Convert.ToInt64(timeSpan.TotalMilliseconds);
 }
