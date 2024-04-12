@@ -78,13 +78,21 @@ public sealed class PostgresCache : IDistributedCache
     /// <inheritdoc />
     public void Remove(string key)
     {
-        throw new NotImplementedException();
+        using NpgsqlConnection connection = _npgsqlConnections.OpenConnection();
+        using NpgsqlCommand command = new(_sqlQueries.DeleteCacheItem(), connection);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+        command.Prepare();
+        command.ExecuteNonQuery();
     }
 
     /// <inheritdoc />
-    public Task RemoveAsync(string key, CancellationToken token)
+    public async Task RemoveAsync(string key, CancellationToken token)
     {
-        throw new NotImplementedException();
+        await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlCommand command = new(_sqlQueries.DeleteCacheItem(), connection);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+        await command.PrepareAsync(token);
+        await command.ExecuteNonQueryAsync(token);
     }
 
     /// <inheritdoc />

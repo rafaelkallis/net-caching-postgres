@@ -58,9 +58,9 @@ public class SqlQueries
             VALUES (@Key, @Value, @ExpiresAtTime, @SlidingExpirationInSeconds, @AbsoluteExpiration);
         END";
 
-    public static string DeleteCacheItem(string schema, string tableName) => $@"
-        DELETE FROM ""{schema}"".""{tableName}"" WHERE Key = $1";
+    public string DeleteCacheItem() => $@"
+        DELETE FROM ""{Schema}"".""{TableName}"" WHERE ""Key"" = $1";
 
-    public static string DeleteExpiredCacheItems(string schema, string tableName) => $@"
-        DELETE FROM ""{schema}"".""{tableName}"" WHERE $1 > ""ExpiresAtTime"";";
+    public string DeleteExpiredCacheItems() => $@"
+        DELETE FROM ""{Schema}"".""{TableName}"" WHERE $1 > ""ExpiresAtTime"";";
 }

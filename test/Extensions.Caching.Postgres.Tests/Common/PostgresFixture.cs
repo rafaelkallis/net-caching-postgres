@@ -59,6 +59,30 @@ public sealed class PostgresFixture : IAsyncLifetime
         await command.ExecuteNonQueryAsync();
     }
 
+    public async Task<CacheItem?> SelectOne(string key, string schema = PostgresCacheConstants.DefaultSchema, string table = PostgresCacheConstants.DefaultTableName)
+    {
+        string sql = $@"
+            SELECT ""Key"", ""Value"", ""ExpiresAtTime"", ""SlidingExpirationInSeconds"", ""AbsoluteExpiration""
+            FROM ""{schema}"".""{table}""
+            WHERE ""Key"" = $1;";
+        await using NpgsqlConnection connection = await OpenConnection();
+        await using NpgsqlCommand command = new(sql, connection);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+        await command.PrepareAsync();
+        await using NpgsqlDataReader dataReader = await command.ExecuteReaderAsync();
+        if (!await dataReader.ReadAsync())
+        {
+            return null;
+        }
+
+        return new CacheItem(
+            dataReader.GetString(0),
+            dataReader.GetFieldValue<byte[]>(1),
+            dataReader.GetFieldValue<DateTimeOffset>(2),
+            dataReader.IsDBNull(3) ? null : dataReader.GetInt64(3),
+            dataReader.IsDBNull(4) ? null : dataReader.GetFieldValue<DateTimeOffset>(4));
+    }
+
     public async Task InitializeAsync()
     {
         await using NpgsqlConnection connection = new(CreateConnectionString());
