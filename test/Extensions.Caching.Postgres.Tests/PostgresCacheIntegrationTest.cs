@@ -1,7 +1,3 @@
-using Npgsql;
-
-using RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
-
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 
 [Collection(PostgresFixture.CollectionName)]
@@ -19,17 +15,32 @@ public class PostgresCacheIntegrationTest : IntegrationTest
         options.ConnectionString = _postgresFixture.ConnectionString;
     }
 
-    [Fact]
-    public async Task TableShouldExist()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task WhenValueExists_ShouldGet(bool async)
     {
-        await using NpgsqlConnection connection = await _postgresFixture.OpenConnection();
-        await using NpgsqlCommand command = connection.CreateCommand();
-        command.CommandText = $@"
-            SELECT 1 FROM information_schema.tables 
-            WHERE  tables.table_schema = '{PostgresCacheConstants.DefaultSchema}'
-            AND    tables.table_name   = '{PostgresCacheConstants.DefaultTableName}'";
-        await using NpgsqlDataReader dataReader = await command.ExecuteReaderAsync();
-        bool readResult = await dataReader.ReadAsync();
-        readResult.Should().BeTrue("because the table should exist");
+        string key = Guid.NewGuid().ToString();
+        byte[] value = new byte[1024];
+        Random.Shared.NextBytes(value);
+        CacheItem cacheItem = new(key,
+            value,
+            ExpiresAtTime: DateTimeOffset.UtcNow.AddMinutes(1),
+            SlidingExpirationInSeconds: null,
+            AbsoluteExpiration: null);
+        await _postgresFixture.Insert(cacheItem);
+
+        byte[]? resultValue;
+        if (async)
+        {
+            resultValue = await Cache.GetAsync(key);
+        }
+        else
+        {
+            resultValue = Cache.Get(key);
+        }
+
+        resultValue.Should().NotBeNull();
+        resultValue.Should().BeEquivalentTo(value);
     }
 }

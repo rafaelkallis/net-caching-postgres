@@ -1,5 +1,7 @@
 using Npgsql;
 
+using NpgsqlTypes;
+
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
 [CollectionDefinition(PostgresFixture.CollectionName)]
@@ -20,6 +22,15 @@ public sealed class PostgresFixture : IAsyncLifetime
     private readonly NpgsqlDataSource _dataSource;
 #endif
 
+    public PostgresFixture()
+    {
+        _database = $"test_{DateTime.UtcNow:o}";
+        ConnectionString = CreateConnectionString(database: _database);
+#if NET8_0_OR_GREATER
+        _dataSource = NpgsqlDataSource.Create(ConnectionString);
+#endif
+    }
+
     public async Task<NpgsqlConnection> OpenConnection()
     {
 #if NET8_0_OR_GREATER
@@ -31,13 +42,21 @@ public sealed class PostgresFixture : IAsyncLifetime
         return connection;
     }
 
-    public PostgresFixture()
+    public async Task Insert(CacheItem cacheItem, string schema = PostgresCacheConstants.DefaultSchema, string table = PostgresCacheConstants.DefaultTableName)
     {
-        _database = $"test_{DateTime.UtcNow:o}";
-        ConnectionString = CreateConnectionString(database: _database);
-#if NET8_0_OR_GREATER
-        _dataSource = NpgsqlDataSource.Create(ConnectionString);
-#endif
+        string sql = $@"
+            INSERT INTO ""{schema}"".""{table}""
+            (""Key"", ""Value"", ""ExpiresAtTime"", ""SlidingExpirationInSeconds"", ""AbsoluteExpiration"")
+            VALUES ($1,$2,$3,$4,$5);";
+        await using NpgsqlConnection connection = await OpenConnection();
+        await using NpgsqlCommand command = new(sql, connection);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, cacheItem.Key);
+        command.Parameters.AddWithValue(NpgsqlDbType.Bytea, cacheItem.Value);
+        command.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, cacheItem.ExpiresAtTime);
+        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheItem.SlidingExpirationInSeconds as object ?? DBNull.Value);
+        command.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, cacheItem.AbsoluteExpiration as object ?? DBNull.Value);
+        await command.PrepareAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task InitializeAsync()

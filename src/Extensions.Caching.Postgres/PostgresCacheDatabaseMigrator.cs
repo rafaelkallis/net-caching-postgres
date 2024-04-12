@@ -30,12 +30,13 @@ public class PostgresCacheDatabaseMigrator : IHostedService
         string schema = options.Value.Schema;
         string tableName = options.Value.TableName;
         string owner = options.Value.Owner;
+        int idMaxLength = options.Value.KeyMaxLength;
 
         string sql = @$"
             CREATE SCHEMA IF NOT EXISTS ""{schema}"" AUTHORIZATION {owner};
 
             CREATE TABLE IF NOT EXISTS ""{schema}"".""{tableName}"" (
-                ""Id"" TEXT PRIMARY KEY,
+                ""Key"" VARCHAR({idMaxLength}) PRIMARY KEY,
                 ""Value"" BYTEA NOT NULL,
                 ""ExpiresAtTime"" TIMESTAMPTZ NOT NULL,
                 ""SlidingExpirationInSeconds"" BIGINT,
@@ -43,8 +44,11 @@ public class PostgresCacheDatabaseMigrator : IHostedService
             );
 
             ALTER TABLE ""{schema}"".""{tableName}"" OWNER TO {owner};
+            ALTER TABLE ""{schema}"".""{tableName}"" ALTER COLUMN ""Key"" TYPE VARCHAR({idMaxLength});
 
             CREATE INDEX IF NOT EXISTS ""IX_{tableName}_ExpiresAtTime"" ON ""{schema}"".""{tableName}"" (""ExpiresAtTime"");";
+
+        _logger.LogInformation("Executing SQL: {Sql}", sql);
         await using NpgsqlCommand command = new(cmdText: sql, connection, transaction);
         await command.ExecuteNonQueryAsync(cancellationToken);
 

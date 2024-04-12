@@ -29,7 +29,7 @@ public class SqlQueries
             ELSE
             DATEADD(SECOND, ""SlidingExpirationInSeconds"", $2)
             END)
-        WHERE ""Id"" = $1
+        WHERE ""Key"" = $1
         AND $2 <= ""ExpiresAtTime""
         AND ""SlidingExpirationInSeconds"" IS NOT NULL
         AND (""AbsoluteExpiration"" IS NULL OR ""AbsoluteExpiration"" <> ""ExpiresAtTime"") ;";
@@ -37,7 +37,7 @@ public class SqlQueries
     public string GetCacheItem() => $@"
         SELECT ""Value""
         FROM ""{Schema}"".""{TableName}"" 
-        WHERE ""Id"" = $1 AND $2 <= ""ExpiresAtTime"";";
+        WHERE ""Key"" = $1 AND $2 <= ""ExpiresAtTime"";";
 
     public string SetCacheItem() => $@"
         DECLARE @ExpiresAtTime DATETIMEOFFSET;
@@ -50,16 +50,16 @@ public class SqlQueries
         END);
         UPDATE ""{Schema}"".""{TableName}"" SET Value = @Value, ExpiresAtTime = @ExpiresAtTime,
         SlidingExpirationInSeconds = @SlidingExpirationInSeconds, AbsoluteExpiration = @AbsoluteExpiration
-        WHERE Id = @Id
+        WHERE Key = @Key
         IF (@@ROWCOUNT = 0)
         BEGIN
             INSERT INTO ""{Schema}"".""{TableName}""
-            (Id, Value, ExpiresAtTime, SlidingExpirationInSeconds, AbsoluteExpiration)
-            VALUES (@Id, @Value, @ExpiresAtTime, @SlidingExpirationInSeconds, @AbsoluteExpiration);
+            (Key, Value, ExpiresAtTime, SlidingExpirationInSeconds, AbsoluteExpiration)
+            VALUES (@Key, @Value, @ExpiresAtTime, @SlidingExpirationInSeconds, @AbsoluteExpiration);
         END";
 
     public static string DeleteCacheItem(string schema, string tableName) => $@"
-        DELETE FROM ""{schema}"".""{tableName}"" WHERE Id = $1";
+        DELETE FROM ""{schema}"".""{tableName}"" WHERE Key = $1";
 
     public static string DeleteExpiredCacheItems(string schema, string tableName) => $@"
         DELETE FROM ""{schema}"".""{tableName}"" WHERE $1 > ""ExpiresAtTime"";";

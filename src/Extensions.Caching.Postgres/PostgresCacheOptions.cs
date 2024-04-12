@@ -15,4 +15,6 @@ public class PostgresCacheOptions
     public string TableName { get; set; } = PostgresCacheConstants.DefaultTableName;
 
     public string Owner { get; set; } = PostgresCacheConstants.DefaultOwner;
+
+    public int KeyMaxLength { get; set; } = PostgresCacheConstants.DefaultKeyMaxLength;
 }

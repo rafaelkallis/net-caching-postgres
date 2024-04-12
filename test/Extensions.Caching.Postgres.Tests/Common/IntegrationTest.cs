@@ -1,6 +1,7 @@
 using Meziantou.Extensions.Logging.Xunit;
 
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
@@ -10,6 +11,7 @@ public abstract class IntegrationTest : IAsyncLifetime
     protected ITestOutputHelper Output { get; }
     private WebApplication? _webApplication;
     protected HttpClient Client { get; private set; } = null!;
+    protected IDistributedCache Cache { get; private set; } = null!;
 
     protected IntegrationTest(ITestOutputHelper output)
     {
@@ -31,6 +33,7 @@ public abstract class IntegrationTest : IAsyncLifetime
         await _webApplication.StartAsync();
 
         Client = _webApplication.GetTestClient();
+        Cache = _webApplication.Services.GetRequiredService<IDistributedCache>();
     }
 
     public async Task DisposeAsync()

@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 
 using Npgsql;
 
+using NpgsqlTypes;
+
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
 public sealed class PostgresCache : IDistributedCache
@@ -28,8 +30,9 @@ public sealed class PostgresCache : IDistributedCache
     {
         using NpgsqlConnection connection = _npgsqlConnections.OpenConnection();
         using NpgsqlCommand command = new(_sqlQueries.GetCacheItem(), connection);
-        command.Parameters.AddWithValue("$1", key);
-        command.Parameters.AddWithValue("$2", DateTimeOffset.UtcNow);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+        command.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, DateTimeOffset.UtcNow);
+        command.Prepare();
         using NpgsqlDataReader dataReader = command.ExecuteReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult);
         if (!dataReader.Read())
         {
@@ -46,8 +49,9 @@ public sealed class PostgresCache : IDistributedCache
     {
         await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(token);
         await using NpgsqlCommand command = new(_sqlQueries.GetCacheItem(), connection);
-        command.Parameters.AddWithValue("$1", key);
-        command.Parameters.AddWithValue("$2", DateTimeOffset.UtcNow);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+        command.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, DateTimeOffset.UtcNow);
+        await command.PrepareAsync(token);
         await using NpgsqlDataReader dataReader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult, token);
         if (!await dataReader.ReadAsync(token))
         {
