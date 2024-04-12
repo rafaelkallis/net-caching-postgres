@@ -1,6 +1,6 @@
 using Meziantou.Extensions.Logging.Xunit;
 
-namespace RafaelKallis.Library.Implementation.Tests.Common;
+namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
 public abstract class UnitTest
 {

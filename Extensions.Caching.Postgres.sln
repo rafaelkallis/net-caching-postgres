@@ -5,15 +5,11 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{47B6D147-AF64-45FD-85FA-316EE2308C95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Abstractions", "src\Library.Abstractions\Library.Abstractions.csproj", "{82686BB0-94A4-467D-8FAF-CDFEBFF7717C}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{709C55A8-D827-494F-90A0-63F4DF4252DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Implementation.Tests", "test\Library.Implementation.Tests\Library.Implementation.Tests.csproj", "{23AC864A-BF11-49AD-863D-A4083CAED3F7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres.Tests", "test\Extensions.Caching.Postgres.Tests\Extensions.Caching.Postgres.Tests.csproj", "{23AC864A-BF11-49AD-863D-A4083CAED3F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Implementation", "src\Library.Implementation\Library.Implementation.csproj", "{6C4FAB0A-3437-42FD-949C-49580E025021}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Abstractions.Tests", "test\Library.Abstractions.Tests\Library.Abstractions.Tests.csproj", "{3A08717E-596D-4188-8E59-F3FFE917FD6D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres", "src\Extensions.Caching.Postgres\Extensions.Caching.Postgres.csproj", "{6C4FAB0A-3437-42FD-949C-49580E025021}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,10 +20,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{82686BB0-94A4-467D-8FAF-CDFEBFF7717C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{82686BB0-94A4-467D-8FAF-CDFEBFF7717C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{82686BB0-94A4-467D-8FAF-CDFEBFF7717C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{82686BB0-94A4-467D-8FAF-CDFEBFF7717C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{23AC864A-BF11-49AD-863D-A4083CAED3F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{23AC864A-BF11-49AD-863D-A4083CAED3F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23AC864A-BF11-49AD-863D-A4083CAED3F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -36,15 +28,9 @@ Global
 		{6C4FAB0A-3437-42FD-949C-49580E025021}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C4FAB0A-3437-42FD-949C-49580E025021}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C4FAB0A-3437-42FD-949C-49580E025021}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3A08717E-596D-4188-8E59-F3FFE917FD6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3A08717E-596D-4188-8E59-F3FFE917FD6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3A08717E-596D-4188-8E59-F3FFE917FD6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3A08717E-596D-4188-8E59-F3FFE917FD6D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{82686BB0-94A4-467D-8FAF-CDFEBFF7717C} = {47B6D147-AF64-45FD-85FA-316EE2308C95}
 		{23AC864A-BF11-49AD-863D-A4083CAED3F7} = {709C55A8-D827-494F-90A0-63F4DF4252DC}
 		{6C4FAB0A-3437-42FD-949C-49580E025021} = {47B6D147-AF64-45FD-85FA-316EE2308C95}
-		{3A08717E-596D-4188-8E59-F3FFE917FD6D} = {709C55A8-D827-494F-90A0-63F4DF4252DC}
 	EndGlobalSection
 EndGlobal

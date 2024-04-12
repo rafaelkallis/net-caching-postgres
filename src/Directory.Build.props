@@ -1,5 +1,6 @@
 <Project>
-  <Import Project="..\Directory.Build.props" />
+  
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
     <IncludeSymbols>true</IncludeSymbols>
@@ -8,10 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="8.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="RafaelKallis.Library.Abstractions" />
-  </ItemGroup>
 </Project>

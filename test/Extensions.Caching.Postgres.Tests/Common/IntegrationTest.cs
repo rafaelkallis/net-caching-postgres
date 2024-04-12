@@ -1,10 +1,9 @@
 using Meziantou.Extensions.Logging.Xunit;
 
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Options;
 
-namespace RafaelKallis.Library.Implementation.Tests.Common;
+namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
 public abstract class IntegrationTest : IAsyncLifetime
 {
@@ -17,8 +16,8 @@ public abstract class IntegrationTest : IAsyncLifetime
         Output = output;
     }
 
-    public LibraryOptions LibraryOptions =>
-        _webApplication?.Services.GetRequiredService<IOptions<LibraryOptions>>().Value
+    public PostgresCacheOptions PostgresCacheOptions =>
+        _webApplication?.Services.GetRequiredService<IOptions<PostgresCacheOptions>>().Value
         ?? throw new InvalidOperationException("The web application is not initialized.");
 
     public async Task InitializeAsync()
@@ -47,26 +46,29 @@ public abstract class IntegrationTest : IAsyncLifetime
 
     protected virtual void ConfigureLogging(ILoggingBuilder logging)
     {
+#if NET8_0_OR_GREATER  
         XUnitLoggerProvider loggerProvider = new(Output, new XUnitLoggerOptions
         {
             IncludeLogLevel = true,
             IncludeCategory = true,
         });
+#else 
+        XUnitLoggerProvider loggerProvider = new(Output);
+#endif
         logging.AddProvider(loggerProvider);
     }
 
     protected virtual void ConfigureServices(IServiceCollection services)
     {
-        services.AddLibrary(configureOptions: ConfigureOptions);
+        services.AddDistributedPostgresCache(configureOptions: ConfigureOptions);
         services.AddControllers();
     }
 
     protected virtual void ConfigureWebApplication(WebApplication app)
     {
         app.UseRouting();
-        app.UseEndpoints(endpoints => endpoints.MapControllers());
     }
 
-    protected virtual void ConfigureOptions(LibraryOptions options)
+    protected virtual void ConfigureOptions(PostgresCacheOptions options)
     { }
 }
