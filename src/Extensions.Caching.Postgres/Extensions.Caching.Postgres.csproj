@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>6.0.0-preview</VersionPrefix>
+    <VersionPrefix>8.0.0-preview</VersionPrefix>
     <AssemblyName>RafaelKallis.Extensions.Caching.Postgres</AssemblyName>
     <RootNamespace>RafaelKallis.Extensions.Caching.Postgres</RootNamespace>
   </PropertyGroup>
