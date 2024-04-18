@@ -7,7 +7,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <InternalsVisibleTo Include="RafaelKallis.Extensions.Caching.Postgres.Tests" />
+    <InternalsVisibleTo Include="Extensions.Caching.Postgres.Tests" />
+    <InternalsVisibleTo Include="Extensions.Caching.Postgres.Benchmark" />
   </ItemGroup>
 
   <ItemGroup>

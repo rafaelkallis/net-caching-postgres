@@ -1,22 +1,13 @@
 using Microsoft.Extensions.Options;
 
-using Npgsql;
-
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
-public class SqlQueries
+public class SqlQueries(IOptions<PostgresCacheOptions> options)
 {
-    private readonly IOptions<PostgresCacheOptions> _options;
-
-    public SqlQueries(IOptions<PostgresCacheOptions> options)
-    {
-        _options = options;
-    }
-
-    public string SchemaName => _options.Value.SchemaName;
-    public string TableName => _options.Value.TableName;
-    public string Owner => _options.Value.Owner;
-    public int KeyMaxLength => _options.Value.KeyMaxLength;
+    public string SchemaName => options.Value.SchemaName;
+    public string TableName => options.Value.TableName;
+    public string Owner => options.Value.Owner;
+    public int KeyMaxLength => options.Value.KeyMaxLength;
 
     public string Migration() => $@"
         CREATE SCHEMA IF NOT EXISTS ""{SchemaName}"" AUTHORIZATION {Owner};

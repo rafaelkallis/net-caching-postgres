@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres", "src\Extensions.Caching.Postgres\Extensions.Caching.Postgres.csproj", "{6C4FAB0A-3437-42FD-949C-49580E025021}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmark", "benchmark", "{7324F702-3BDD-46CE-BA65-CC8EF4E6D4C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres.Benchmark", "benchmark\Extensions.Caching.Postgres.Benchmark\Extensions.Caching.Postgres.Benchmark.csproj", "{2B98F9B3-F9DF-40AC-814A-5AA12F8911A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,9 +32,14 @@ Global
 		{6C4FAB0A-3437-42FD-949C-49580E025021}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C4FAB0A-3437-42FD-949C-49580E025021}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C4FAB0A-3437-42FD-949C-49580E025021}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B98F9B3-F9DF-40AC-814A-5AA12F8911A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B98F9B3-F9DF-40AC-814A-5AA12F8911A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B98F9B3-F9DF-40AC-814A-5AA12F8911A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B98F9B3-F9DF-40AC-814A-5AA12F8911A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{23AC864A-BF11-49AD-863D-A4083CAED3F7} = {709C55A8-D827-494F-90A0-63F4DF4252DC}
 		{6C4FAB0A-3437-42FD-949C-49580E025021} = {47B6D147-AF64-45FD-85FA-316EE2308C95}
+		{2B98F9B3-F9DF-40AC-814A-5AA12F8911A7} = {7324F702-3BDD-46CE-BA65-CC8EF4E6D4C2}
 	EndGlobalSection
 EndGlobal

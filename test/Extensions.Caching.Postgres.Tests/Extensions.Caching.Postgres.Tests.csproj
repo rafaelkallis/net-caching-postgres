@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <AssemblyName>RafaelKallis.Extensions.Caching.Postgres.Tests</AssemblyName>
     <RootNamespace>RafaelKallis.Extensions.Caching.Postgres.Tests</RootNamespace>
   </PropertyGroup>
 
