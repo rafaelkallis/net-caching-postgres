@@ -3,24 +3,14 @@ using Npgsql;
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 
 [Collection(PostgresFixture.CollectionName)]
-public class PostgresCacheDatabaseMigratorIntegrationTest : IntegrationTest
+public sealed class PostgresCacheDatabaseMigratorIntegrationTest(
+    ITestOutputHelper output,
+    PostgresFixture postgresFixture) : IntegrationTest(output, postgresFixture)
 {
-    private readonly PostgresFixture _postgresFixture;
-
-    public PostgresCacheDatabaseMigratorIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : base(output)
-    {
-        _postgresFixture = postgresFixture;
-    }
-
-    protected override void ConfigureOptions(PostgresCacheOptions options)
-    {
-        options.ConnectionString = _postgresFixture.ConnectionString;
-    }
-
     [Fact]
     public async Task TableShouldExist()
     {
-        await using NpgsqlConnection connection = await _postgresFixture.OpenConnection();
+        await using NpgsqlConnection connection = await PostgresFixture.OpenConnection();
         await using NpgsqlCommand command = connection.CreateCommand();
         command.CommandText = $@"
             SELECT 1 FROM information_schema.tables 

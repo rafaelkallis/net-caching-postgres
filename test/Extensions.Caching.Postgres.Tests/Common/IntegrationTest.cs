@@ -6,20 +6,16 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
-public abstract class IntegrationTest : IAsyncLifetime
+public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : IAsyncLifetime
 {
-    protected ITestOutputHelper Output { get; }
+    protected ITestOutputHelper Output { get; } = output;
+    protected PostgresFixture PostgresFixture { get; } = postgresFixture;
+
     private WebApplication? _webApplication;
-    protected FakeTimeProvider FakeTimeProvider { get; private set; }
+    protected FakeTimeProvider FakeTimeProvider { get; private set; } = new();
     protected HttpClient Client { get; private set; } = null!;
     protected PostgresCache PostgresCache { get; private set; } = null!;
     protected PostgresCacheOptions PostgresCacheOptions { get; private set; } = null!;
-
-    protected IntegrationTest(ITestOutputHelper output)
-    {
-        Output = output;
-        FakeTimeProvider = new();
-    }
 
     public virtual async Task InitializeAsync()
     {
@@ -42,6 +38,7 @@ public abstract class IntegrationTest : IAsyncLifetime
 
         if (_webApplication is not null)
         {
+            await _webApplication.StopAsync();
             await _webApplication.DisposeAsync();
         }
         _webApplication = null;
@@ -75,6 +72,7 @@ public abstract class IntegrationTest : IAsyncLifetime
 
     protected virtual void ConfigureOptions(PostgresCacheOptions options)
     {
+        options.ConnectionString = PostgresFixture.ConnectionString;
         options.EnableGarbageCollection = false;
         options.UncorrelateGarbageCollection = false;
     }
