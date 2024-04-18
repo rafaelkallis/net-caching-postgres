@@ -1,3 +1,5 @@
+using System.Data;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -23,35 +25,11 @@ public class PostgresCacheDatabaseMigrator : IHostedService
         _logger.LogInformation("Migrating database...");
         await using AsyncServiceScope asyncServiceScope = _serviceProvider.CreateAsyncScope();
         NpgsqlConnections npgsqlConnections = asyncServiceScope.ServiceProvider.GetRequiredService<NpgsqlConnections>();
-        IOptions<PostgresCacheOptions> options = asyncServiceScope.ServiceProvider.GetRequiredService<IOptions<PostgresCacheOptions>>();
+        SqlQueries sqlQueries = asyncServiceScope.ServiceProvider.GetRequiredService<SqlQueries>();
         await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(cancellationToken);
-        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-        string schema = options.Value.SchemaName;
-        string tableName = options.Value.TableName;
-        string owner = options.Value.Owner;
-        int idMaxLength = options.Value.KeyMaxLength;
-
-        string sql = @$"
-            CREATE SCHEMA IF NOT EXISTS ""{schema}"" AUTHORIZATION {owner};
-
-            CREATE TABLE IF NOT EXISTS ""{schema}"".""{tableName}"" (
-                ""Key"" VARCHAR({idMaxLength}) PRIMARY KEY,
-                ""Value"" BYTEA NOT NULL,
-                ""ExpiresAt"" BIGINT NOT NULL,
-                ""SlidingExpiration"" BIGINT,
-                ""AbsoluteExpiration"" BIGINT
-            );
-
-            ALTER TABLE ""{schema}"".""{tableName}"" OWNER TO {owner};
-            ALTER TABLE ""{schema}"".""{tableName}"" ALTER COLUMN ""Key"" TYPE VARCHAR({idMaxLength});
-
-            CREATE INDEX IF NOT EXISTS ""IX_{tableName}_ExpiresAt"" ON ""{schema}"".""{tableName}"" (""ExpiresAt"");";
-
-        _logger.LogInformation("Executing SQL: {Sql}", sql);
-        await using NpgsqlCommand command = new(cmdText: sql, connection, transaction);
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        await using NpgsqlCommand command = new(sqlQueries.Migration(), connection, transaction);
         await command.ExecuteNonQueryAsync(cancellationToken);
-
         await transaction.CommitAsync(cancellationToken);
         _logger.LogInformation("Database migrated");
     }

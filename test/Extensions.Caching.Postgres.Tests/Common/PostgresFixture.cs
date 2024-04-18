@@ -18,7 +18,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public string ConnectionString { get; }
     private readonly string _database;
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
     private readonly NpgsqlDataSource _dataSource;
 #endif
 
@@ -26,14 +26,14 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         _database = $"test_{DateTime.UtcNow:o}";
         ConnectionString = CreateConnectionString(database: _database);
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
         _dataSource = NpgsqlDataSource.Create(ConnectionString);
 #endif
     }
 
     public async Task<NpgsqlConnection> OpenConnection()
     {
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
         NpgsqlConnection connection = _dataSource.CreateConnection();  
 #else
         NpgsqlConnection connection = new(ConnectionString);
@@ -98,7 +98,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
         await _dataSource.DisposeAsync();
 #endif
         string sql = $@"DROP DATABASE ""{_database}"" (FORCE);";

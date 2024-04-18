@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Internal;
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
@@ -28,5 +27,6 @@ public class PostgresCacheOptions
 
     public TimeSpan GarbageCollectionInterval { get; set; } = TimeSpan.FromSeconds(PostgresCacheConstants.DefaultGarbageCollectionIntervalInSeconds);
 
-    internal ISystemClock SystemClock { get; set; } = new SystemClock();
+    internal bool EnableGarbageCollection { get; set; } = true;
+    internal bool UncorrelateGarbageCollection { get; set; } = true;
 }

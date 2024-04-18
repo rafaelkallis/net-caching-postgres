@@ -28,6 +28,6 @@ public class PostgresCacheDatabaseMigratorIntegrationTest : IntegrationTest
             AND    tables.table_name   = '{PostgresCacheConstants.DefaultTableName}'";
         await using NpgsqlDataReader dataReader = await command.ExecuteReaderAsync();
         bool readResult = await dataReader.ReadAsync();
-        readResult.Should().BeTrue("because the table should exist");
+        readResult.Should().BeTrue("the table should exist");
     }
 }

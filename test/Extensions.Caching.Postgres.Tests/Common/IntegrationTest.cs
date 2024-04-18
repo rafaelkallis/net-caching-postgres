@@ -1,8 +1,8 @@
 using Meziantou.Extensions.Logging.Xunit;
 
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
@@ -10,19 +10,18 @@ public abstract class IntegrationTest : IAsyncLifetime
 {
     protected ITestOutputHelper Output { get; }
     private WebApplication? _webApplication;
+    protected FakeTimeProvider FakeTimeProvider { get; private set; }
     protected HttpClient Client { get; private set; } = null!;
-    protected IDistributedCache Cache { get; private set; } = null!;
+    protected PostgresCache PostgresCache { get; private set; } = null!;
+    protected PostgresCacheOptions PostgresCacheOptions { get; private set; } = null!;
 
     protected IntegrationTest(ITestOutputHelper output)
     {
         Output = output;
+        FakeTimeProvider = new();
     }
 
-    public PostgresCacheOptions PostgresCacheOptions =>
-        _webApplication?.Services.GetRequiredService<IOptions<PostgresCacheOptions>>().Value
-        ?? throw new InvalidOperationException("The web application is not initialized.");
-
-    public async Task InitializeAsync()
+    public virtual async Task InitializeAsync()
     {
         WebApplicationBuilder webApplicationBuilder = WebApplication.CreateBuilder();
         webApplicationBuilder.WebHost.UseTestServer();
@@ -33,10 +32,11 @@ public abstract class IntegrationTest : IAsyncLifetime
         await _webApplication.StartAsync();
 
         Client = _webApplication.GetTestClient();
-        Cache = _webApplication.Services.GetRequiredService<IDistributedCache>();
+        PostgresCache = _webApplication.Services.GetRequiredService<PostgresCache>();
+        PostgresCacheOptions = _webApplication.Services.GetRequiredService<IOptions<PostgresCacheOptions>>().Value;
     }
 
-    public async Task DisposeAsync()
+    public virtual async Task DisposeAsync()
     {
         Client.Dispose();
 
@@ -49,7 +49,7 @@ public abstract class IntegrationTest : IAsyncLifetime
 
     protected virtual void ConfigureLogging(ILoggingBuilder logging)
     {
-#if NET8_0_OR_GREATER  
+#if NET7_0_OR_GREATER  
         XUnitLoggerProvider loggerProvider = new(Output, new XUnitLoggerOptions
         {
             IncludeLogLevel = true,
@@ -63,6 +63,7 @@ public abstract class IntegrationTest : IAsyncLifetime
 
     protected virtual void ConfigureServices(IServiceCollection services)
     {
+        services.AddSingleton<TimeProvider>(FakeTimeProvider);
         services.AddDistributedPostgresCache(configureOptions: ConfigureOptions);
         services.AddControllers();
     }
@@ -73,5 +74,8 @@ public abstract class IntegrationTest : IAsyncLifetime
     }
 
     protected virtual void ConfigureOptions(PostgresCacheOptions options)
-    { }
+    {
+        options.EnableGarbageCollection = false;
+        options.UncorrelateGarbageCollection = false;
+    }
 }

@@ -2,7 +2,10 @@
 	"name": "library",
 	"image": "mcr.microsoft.com/devcontainers/base:debian",
 	"features": {
-		"ghcr.io/devcontainers/features/dotnet": "6.0"
+		"ghcr.io/devcontainers/features/dotnet:2": {
+            "version": "8.0",
+            "additionalVersions": ["6.0", "7.0"]
+        }
 	},
 	"customizations": {
 		"vscode": {

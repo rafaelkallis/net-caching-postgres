@@ -3,6 +3,6 @@ namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 public record CacheEntry(
     string Key,
     byte[] Value,
-    DateTime ExpiresAt,
+    DateTimeOffset ExpiresAt,
     TimeSpan? SlidingExpiration,
-    DateTime? AbsoluteExpiration);
+    DateTimeOffset? AbsoluteExpiration);

@@ -8,10 +8,12 @@ namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 public class PostgresCacheIntegrationTest : IntegrationTest
 {
     private readonly PostgresFixture _postgresFixture;
+    private DateTimeOffset _testStartedAt;
 
     public PostgresCacheIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : base(output)
     {
         _postgresFixture = postgresFixture;
+        _testStartedAt = DateTimeOffset.MinValue;
     }
 
     protected override void ConfigureOptions(PostgresCacheOptions options)
@@ -19,17 +21,22 @@ public class PostgresCacheIntegrationTest : IntegrationTest
         options.ConnectionString = _postgresFixture.ConnectionString;
     }
 
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+        _testStartedAt = FakeTimeProvider.GetUtcNow();
+    }
+
     [Theory]
     [CombinatorialData]
     public async Task Get_WhenItemExists_ShouldGet(bool async)
     {
-        DateTime now = DateTime.UtcNow;
         string key = Guid.NewGuid().ToString();
         byte[] value = new byte[1024];
         Random.Shared.NextBytes(value);
         CacheEntry cacheEntry = new(key,
             value,
-            ExpiresAt: now.AddMinutes(1),
+            ExpiresAt: _testStartedAt.AddMinutes(1),
             SlidingExpiration: TimeSpan.FromMinutes(5),
             AbsoluteExpiration: null);
         await _postgresFixture.Insert(cacheEntry);
@@ -37,11 +44,11 @@ public class PostgresCacheIntegrationTest : IntegrationTest
         byte[]? resultValue;
         if (async)
         {
-            resultValue = await Cache.GetAsync(key);
+            resultValue = await PostgresCache.GetAsync(key, default);
         }
         else
         {
-            resultValue = Cache.Get(key);
+            resultValue = PostgresCache.Get(key);
         }
 
         resultValue.Should().NotBeNull();
@@ -49,7 +56,7 @@ public class PostgresCacheIntegrationTest : IntegrationTest
 
         CacheEntry? cacheEntry2 = await _postgresFixture.SelectOne(key);
         cacheEntry2.Should().NotBeNull();
-        cacheEntry2?.ExpiresAt.Should().BeCloseTo(now + TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(1));
+        cacheEntry2?.ExpiresAt.Should().BeCloseTo(_testStartedAt + TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(1));
         cacheEntry2?.SlidingExpiration.Should().Be(cacheEntry.SlidingExpiration);
         cacheEntry2?.AbsoluteExpiration.Should().BeNull();
     }
@@ -63,11 +70,11 @@ public class PostgresCacheIntegrationTest : IntegrationTest
         byte[]? resultValue;
         if (async)
         {
-            resultValue = await Cache.GetAsync(key);
+            resultValue = await PostgresCache.GetAsync(key, default);
         }
         else
         {
-            resultValue = Cache.Get(key);
+            resultValue = PostgresCache.Get(key);
         }
 
         resultValue.Should().BeNull();
@@ -89,11 +96,11 @@ public class PostgresCacheIntegrationTest : IntegrationTest
 
         if (async)
         {
-            await Cache.RemoveAsync(key);
+            await PostgresCache.RemoveAsync(key, default);
         }
         else
         {
-            Cache.Remove(key);
+            PostgresCache.Remove(key);
         }
 
         CacheEntry? cacheItem2 = await _postgresFixture.SelectOne(key);
@@ -113,7 +120,6 @@ public class PostgresCacheIntegrationTest : IntegrationTest
     [CombinatorialData]
     public async Task Set_WhenItemDoesNotExist_ShouldAddItem(bool async, ExpirationScenarios scenario)
     {
-        DateTime now = DateTime.UtcNow;
         string key = Guid.NewGuid().ToString();
         byte[] value = new byte[1024];
         Random.Shared.NextBytes(value);
@@ -125,7 +131,7 @@ public class PostgresCacheIntegrationTest : IntegrationTest
 
         if (scenario is ExpirationScenarios.Absolute or ExpirationScenarios.SlidingAndAbsolute)
         {
-            options.AbsoluteExpiration = now + absolute;
+            options.AbsoluteExpiration = _testStartedAt + absolute;
         }
 
         if (scenario is ExpirationScenarios.AbsoluteRelativeToNow)
@@ -142,11 +148,11 @@ public class PostgresCacheIntegrationTest : IntegrationTest
 
         if (async)
         {
-            await Cache.SetAsync(key, value, options);
+            await PostgresCache.SetAsync(key, value, options, default);
         }
         else
         {
-            Cache.Set(key, value, options);
+            PostgresCache.Set(key, value, options);
         }
 
         CacheEntry? cacheEntry = await _postgresFixture.SelectOne(key);
@@ -158,27 +164,27 @@ public class PostgresCacheIntegrationTest : IntegrationTest
         TimeSpan tolerance = TimeSpan.FromMilliseconds(10);
         if (scenario is ExpirationScenarios.NoOptions)
         {
-            cacheEntry?.ExpiresAt.Should().BeCloseTo(now.Add(PostgresCacheOptions.DefaultSlidingExpiration), TimeSpan.FromSeconds(1));
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(_testStartedAt.Add(PostgresCacheOptions.DefaultSlidingExpiration), TimeSpan.FromSeconds(1));
             cacheEntry?.SlidingExpiration.Should().BeNull();
             cacheEntry?.AbsoluteExpiration.Should().BeNull();
         }
         else if (scenario is ExpirationScenarios.Absolute or ExpirationScenarios.AbsoluteRelativeToNow)
         {
-            cacheEntry?.ExpiresAt.Should().BeCloseTo(now + absolute, tolerance);
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(_testStartedAt + absolute, tolerance);
             cacheEntry?.SlidingExpiration.Should().BeNull();
-            cacheEntry?.AbsoluteExpiration.Should().BeCloseTo(now + absolute, tolerance);
+            cacheEntry?.AbsoluteExpiration.Should().BeCloseTo(_testStartedAt + absolute, tolerance);
         }
         else if (scenario is ExpirationScenarios.Sliding)
         {
-            cacheEntry?.ExpiresAt.Should().BeCloseTo(now + sliding, tolerance);
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(_testStartedAt + sliding, tolerance);
             cacheEntry?.SlidingExpiration.Should().Be(sliding);
             cacheEntry?.AbsoluteExpiration.Should().BeNull();
         }
         else if (scenario is ExpirationScenarios.SlidingAndAbsolute)
         {
-            cacheEntry?.ExpiresAt.Should().BeCloseTo(now + sliding, tolerance);
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(_testStartedAt + sliding, tolerance);
             cacheEntry?.SlidingExpiration.Should().Be(sliding);
-            cacheEntry?.AbsoluteExpiration.Should().BeCloseTo(now + absolute, tolerance);
+            cacheEntry?.AbsoluteExpiration.Should().BeCloseTo(_testStartedAt + absolute, tolerance);
         }
         else
         {
@@ -190,30 +196,85 @@ public class PostgresCacheIntegrationTest : IntegrationTest
     [CombinatorialData]
     public async Task Refresh_ShouldUpdateExpiredAt(bool async)
     {
-        DateTime now = DateTime.UtcNow;
         string key = Guid.NewGuid().ToString();
         byte[] value = new byte[1024];
         Random.Shared.NextBytes(value);
         CacheEntry cacheEntry = new(key,
             value,
-            ExpiresAt: now.AddMinutes(1),
+            ExpiresAt: _testStartedAt.AddMinutes(1),
             SlidingExpiration: TimeSpan.FromMinutes(5),
             AbsoluteExpiration: null);
         await _postgresFixture.Insert(cacheEntry);
 
         if (async)
         {
-            await Cache.RefreshAsync(key);
+            await PostgresCache.RefreshAsync(key, default);
         }
         else
         {
-            Cache.Refresh(key);
+            PostgresCache.Refresh(key);
         }
 
         CacheEntry? cacheEntry2 = await _postgresFixture.SelectOne(key);
         cacheEntry2.Should().NotBeNull();
-        cacheEntry2?.ExpiresAt.Should().BeCloseTo(now + TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(1));
+        cacheEntry2?.ExpiresAt.Should().BeCloseTo(_testStartedAt + TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(1));
         cacheEntry2?.SlidingExpiration.Should().Be(cacheEntry.SlidingExpiration);
         cacheEntry2?.AbsoluteExpiration.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task WhenCacheEntriesAreExpired_ThenGarbageCollectorShouldRemoveThem()
+    {
+
+        string key1 = Guid.NewGuid().ToString();
+        byte[] value1 = new byte[1024];
+        Random.Shared.NextBytes(value1);
+        CacheEntry? cacheEntry1 = new(key1,
+            value1,
+            ExpiresAt: _testStartedAt.AddMinutes(1),
+            SlidingExpiration: null,
+            AbsoluteExpiration: null);
+        await _postgresFixture.Insert(cacheEntry1);
+
+        string key2 = Guid.NewGuid().ToString();
+        byte[] value2 = new byte[1024];
+        Random.Shared.NextBytes(value2);
+        CacheEntry? cacheEntry2 = new(key2,
+            value1,
+            ExpiresAt: _testStartedAt.AddMinutes(2),
+            SlidingExpiration: null,
+            AbsoluteExpiration: null);
+        await _postgresFixture.Insert(cacheEntry2);
+
+        await PostgresCache.RunGarbageCollection(CancellationToken.None);
+
+        cacheEntry1 = await _postgresFixture.SelectOne(key1);
+        cacheEntry1.Should().NotBeNull("it dit not expire");
+        cacheEntry2 = await _postgresFixture.SelectOne(key2);
+        cacheEntry2.Should().NotBeNull("it did not expire");
+
+        FakeTimeProvider.Advance(TimeSpan.FromMinutes(1));
+
+        cacheEntry1 = await _postgresFixture.SelectOne(key1);
+        cacheEntry1.Should().NotBeNull("garbage collection did not run");
+        cacheEntry2 = await _postgresFixture.SelectOne(key2);
+        cacheEntry2.Should().NotBeNull("it did not expire");
+
+        await PostgresCache.RunGarbageCollection(CancellationToken.None);
+
+        cacheEntry1 = await _postgresFixture.SelectOne(key1);
+        cacheEntry1.Should().BeNull("garbage collection removed it");
+        cacheEntry2 = await _postgresFixture.SelectOne(key2);
+        cacheEntry2.Should().NotBeNull("it did not expire");
+
+        FakeTimeProvider.Advance(TimeSpan.FromMinutes(1));
+
+        cacheEntry2 = await _postgresFixture.SelectOne(key2);
+        cacheEntry2.Should().NotBeNull("garbage collection did not run");
+
+        await PostgresCache.RunGarbageCollection(CancellationToken.None);
+
+        cacheEntry2 = await _postgresFixture.SelectOne(key2);
+        cacheEntry2.Should().BeNull("garbage collection removed it");
     }
 }

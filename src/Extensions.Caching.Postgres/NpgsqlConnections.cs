@@ -11,7 +11,7 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
 {
     private readonly ILogger<NpgsqlConnections> _logger;
     private readonly IOptions<PostgresCacheOptions> _options;
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
     private readonly NpgsqlDataSource _dataSource; 
 #endif
 
@@ -19,7 +19,7 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
     {
         _logger = logger;
         _options = options;
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
         NpgsqlDataSourceBuilder dataSourceBuilder = new(_options.Value.ConnectionString);
         _dataSource = dataSourceBuilder.Build();
 #endif
@@ -29,7 +29,7 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
     public NpgsqlConnection OpenConnection()
     {
         LogCreatingConnection();
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
         NpgsqlConnection connection = _dataSource.CreateConnection();
 #else
         NpgsqlConnection connection = new(_options.Value.ConnectionString);
@@ -52,14 +52,14 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
 
     public void Dispose()
     {
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
         _dataSource.Dispose();
 #endif
     }
 
     public async ValueTask DisposeAsync()
     {
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
         await _dataSource.DisposeAsync();
 #else
         await Task.CompletedTask;
