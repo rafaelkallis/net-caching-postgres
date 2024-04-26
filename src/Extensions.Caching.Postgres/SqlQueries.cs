@@ -8,9 +8,7 @@ public class SqlQueries(IOptions<PostgresCacheOptions> options)
     private string TableName => options.Value.TableName;
     private string Owner => options.Value.Owner;
     private int KeyMaxLength => options.Value.KeyMaxLength;
-    private bool UnloggedTable => options.Value.UnloggedTable;
-
-    private string Unlogged => UnloggedTable ? "UNLOGGED" : string.Empty;
+    private string Unlogged => options.Value.UseUnloggedTable ? "UNLOGGED" : string.Empty;
 
     public string Migration() => $@"
         CREATE SCHEMA IF NOT EXISTS ""{SchemaName}"" AUTHORIZATION {Owner};

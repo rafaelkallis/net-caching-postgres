@@ -40,7 +40,7 @@ public class PostgresCacheOptions
     /// Unlogged tables can be up to 10 times faster than logged tables.
     /// Unlogged tables are not crash-safe and are not replicated.
     /// </summary>
-    public bool UnloggedTable { get; set; } = PostgresCacheConstants.DefaultUnloggedTable;
+    public bool UseUnloggedTable { get; set; } = PostgresCacheConstants.DefaultUseUnloggedTable;
 
     /// <summary>
     /// The default lifetime of cache entries if neither <see cref="DistributedCacheEntryOptions.AbsoluteExpiration"/> nor <see cref="DistributedCacheEntryOptions.SlidingExpiration"/> is set.

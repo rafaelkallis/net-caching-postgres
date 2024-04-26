@@ -36,6 +36,7 @@ public abstract class Benchmark
             {
                 options.ConnectionString = _connectionString;
                 options.EnableGarbageCollection = false;
+                options.UseUnloggedTable = true;
             });
         });
         _host = builder.Build();
