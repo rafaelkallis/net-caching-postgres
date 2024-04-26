@@ -7,6 +7,8 @@ namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 [Collection(PostgresFixture.CollectionName)]
 public sealed class PostgresCacheIntegrationTest : IntegrationTest
 {
+    private const int ValueSize = 1024;
+
     public PostgresCacheIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : base(output, postgresFixture)
     { }
 
@@ -15,7 +17,7 @@ public sealed class PostgresCacheIntegrationTest : IntegrationTest
     public async Task Get_WhenItemExists_ShouldGet(bool async)
     {
         string key = Guid.NewGuid().ToString();
-        byte[] value = new byte[1024];
+        byte[] value = new byte[ValueSize];
         Random.Shared.NextBytes(value);
         CacheEntry cacheEntry = new(key,
             value,
@@ -68,11 +70,11 @@ public sealed class PostgresCacheIntegrationTest : IntegrationTest
     public async Task Remove_WhenItemExists_ShouldRemoveItem(bool async)
     {
         string key = Guid.NewGuid().ToString();
-        byte[] value = new byte[1024];
+        byte[] value = new byte[ValueSize];
         Random.Shared.NextBytes(value);
         CacheEntry cacheEntry = new(key,
             value,
-            ExpiresAt: DateTime.UtcNow.AddMinutes(1),
+            ExpiresAt: DateTimeOffset.UtcNow.AddMinutes(1),
             SlidingExpiration: null,
             AbsoluteExpiration: null);
         await PostgresFixture.Insert(cacheEntry);
@@ -92,11 +94,11 @@ public sealed class PostgresCacheIntegrationTest : IntegrationTest
 
     public enum ExpirationScenarios
     {
-        NoOptions,
         Absolute,
         AbsoluteRelativeToNow,
         Sliding,
         SlidingAndAbsolute,
+        NoOption,
     }
 
     [Theory]
@@ -104,7 +106,7 @@ public sealed class PostgresCacheIntegrationTest : IntegrationTest
     public async Task Set_WhenItemDoesNotExist_ShouldAddItem(bool async, ExpirationScenarios scenario)
     {
         string key = Guid.NewGuid().ToString();
-        byte[] value = new byte[1024];
+        byte[] value = new byte[ValueSize];
         Random.Shared.NextBytes(value);
 
         TimeSpan sliding = TimeSpan.FromMinutes(1);
@@ -145,13 +147,7 @@ public sealed class PostgresCacheIntegrationTest : IntegrationTest
         cacheEntry?.Value.Should().BeEquivalentTo(value);
 
         TimeSpan tolerance = TimeSpan.FromMilliseconds(10);
-        if (scenario is ExpirationScenarios.NoOptions)
-        {
-            cacheEntry?.ExpiresAt.Should().BeCloseTo(FakeTimeProvider.GetUtcNow().Add(PostgresCacheOptions.DefaultSlidingExpiration), TimeSpan.FromSeconds(1));
-            cacheEntry?.SlidingExpiration.Should().BeNull();
-            cacheEntry?.AbsoluteExpiration.Should().BeNull();
-        }
-        else if (scenario is ExpirationScenarios.Absolute or ExpirationScenarios.AbsoluteRelativeToNow)
+        if (scenario is ExpirationScenarios.Absolute or ExpirationScenarios.AbsoluteRelativeToNow)
         {
             cacheEntry?.ExpiresAt.Should().BeCloseTo(FakeTimeProvider.GetUtcNow() + absolute, tolerance);
             cacheEntry?.SlidingExpiration.Should().BeNull();
@@ -168,6 +164,12 @@ public sealed class PostgresCacheIntegrationTest : IntegrationTest
             cacheEntry?.ExpiresAt.Should().BeCloseTo(FakeTimeProvider.GetUtcNow() + sliding, tolerance);
             cacheEntry?.SlidingExpiration.Should().Be(sliding);
             cacheEntry?.AbsoluteExpiration.Should().BeCloseTo(FakeTimeProvider.GetUtcNow() + absolute, tolerance);
+        }
+        else if (scenario is ExpirationScenarios.NoOption)
+        {
+            cacheEntry?.ExpiresAt.Should().BeCloseTo(FakeTimeProvider.GetUtcNow() + TimeSpan.FromSeconds(PostgresCacheConstants.DefaultSlidingExpirationInSeconds), tolerance);
+            cacheEntry?.SlidingExpiration.Should().NotBeNull();
+            cacheEntry?.AbsoluteExpiration.Should().BeNull();
         }
         else
         {

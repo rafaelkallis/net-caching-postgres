@@ -26,7 +26,7 @@ public static class PostgresCacheExtensions
         services.AddSingleton<PostgresCache>();
         services.AddSingleton<IDistributedCache>(sp => sp.GetRequiredService<PostgresCache>());
 
-        services.AddHostedService<PostgresCacheDatabaseMigrator>();
+        services.AddHostedService<PostgresCacheMigratorHostedService>();
         services.AddHostedService<PostgresCacheGarbageCollectorBackgroundService>();
 
         return services;

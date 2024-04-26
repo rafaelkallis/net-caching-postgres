@@ -4,15 +4,18 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 
 public class SqlQueries(IOptions<PostgresCacheOptions> options)
 {
-    public string SchemaName => options.Value.SchemaName;
-    public string TableName => options.Value.TableName;
-    public string Owner => options.Value.Owner;
-    public int KeyMaxLength => options.Value.KeyMaxLength;
+    private string SchemaName => options.Value.SchemaName;
+    private string TableName => options.Value.TableName;
+    private string Owner => options.Value.Owner;
+    private int KeyMaxLength => options.Value.KeyMaxLength;
+    private bool UnloggedTable => options.Value.UnloggedTable;
+
+    private string Unlogged => UnloggedTable ? "UNLOGGED" : string.Empty;
 
     public string Migration() => $@"
         CREATE SCHEMA IF NOT EXISTS ""{SchemaName}"" AUTHORIZATION {Owner};
 
-        CREATE TABLE IF NOT EXISTS ""{SchemaName}"".""{TableName}"" (
+        CREATE {Unlogged} TABLE IF NOT EXISTS ""{SchemaName}"".""{TableName}"" (
             ""Key"" VARCHAR({KeyMaxLength}) PRIMARY KEY,
             ""Value"" BYTEA NOT NULL,
             ""ExpiresAt"" BIGINT NOT NULL,
@@ -55,4 +58,7 @@ public class SqlQueries(IOptions<PostgresCacheOptions> options)
     public string DeleteExpiredCacheEntriesWithLock() => $@"
         LOCK TABLE ""{SchemaName}"".""{TableName}"" IN ROW EXCLUSIVE MODE;
         DELETE FROM ""{SchemaName}"".""{TableName}"" WHERE $1 >= ""ExpiresAt"";";
+
+    public string TruncateCacheEntries() => $@"
+        TRUNCATE TABLE ""{SchemaName}"".""{TableName}"";";
 }

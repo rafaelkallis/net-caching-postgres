@@ -1,5 +1,9 @@
 ﻿using BenchmarkDotNet.Running;
 
-using RafaelKallis.Extensions.Caching.Postgres.Benchmark;
+namespace RafaelKallis.Extensions.Caching.Postgres.Benchmark;
 
-var summary = BenchmarkRunner.Run<SetBenchmarks>();
+public class Program
+{
+    public static void Main(string[] args) =>
+        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args: args);
+}

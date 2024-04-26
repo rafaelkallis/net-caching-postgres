@@ -8,7 +8,7 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 public sealed class PostgresCacheGarbageCollectorBackgroundService(
     ILogger<PostgresCacheGarbageCollectorBackgroundService> logger,
     IServiceProvider serviceProvider,
-    IOptionsMonitor<PostgresCacheOptions> postgresCacheOptions,
+    IOptions<PostgresCacheOptions> postgresCacheOptions,
     TimeProvider timeProvider)
     : BackgroundService
 {
@@ -23,11 +23,11 @@ public sealed class PostgresCacheGarbageCollectorBackgroundService(
         }
 
         TimeSpan dueTime = TimeSpan.Zero;
-        if (postgresCacheOptions.CurrentValue.UncorrelateGarbageCollection)
+        if (postgresCacheOptions.Value.UncorrelateGarbageCollection)
         {
-            dueTime = Random.Shared.NextInt64(postgresCacheOptions.CurrentValue.GarbageCollectionInterval.ToMilliseconds()).AsMillisecondsTimeSpan();
+            dueTime = Random.Shared.NextInt64(postgresCacheOptions.Value.GarbageCollectionInterval.ToMilliseconds()).AsMillisecondsTimeSpan();
         }
-        TimeSpan period = postgresCacheOptions.CurrentValue.GarbageCollectionInterval;
+        TimeSpan period = postgresCacheOptions.Value.GarbageCollectionInterval;
         logger.LogDebug("Initializing garbage collection with {DueTime} {Period}", dueTime, period);
         _timer = timeProvider.CreateTimer(GarbageCollectionTimerCallback, state: stoppingToken, dueTime, period);
         stoppingToken.Register(StopTimer);
@@ -37,7 +37,7 @@ public sealed class PostgresCacheGarbageCollectorBackgroundService(
     {
         ArgumentNullException.ThrowIfNull(state);
         CancellationToken ct = (CancellationToken)state;
-        if (!postgresCacheOptions.CurrentValue.EnableGarbageCollection)
+        if (!postgresCacheOptions.Value.EnableGarbageCollection)
         {
             logger.LogDebug("Garbage collection is disabled");
             return;

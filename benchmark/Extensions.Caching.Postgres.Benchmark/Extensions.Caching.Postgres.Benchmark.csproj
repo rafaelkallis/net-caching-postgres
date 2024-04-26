@@ -6,12 +6,4 @@
     <RootNamespace>RafaelKallis.Extensions.Caching.Postgres.Benchmark</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Extensions.Caching.Postgres\Extensions.Caching.Postgres.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
-  </ItemGroup>
-
 </Project>

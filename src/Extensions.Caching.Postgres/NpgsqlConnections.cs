@@ -30,24 +30,24 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
     {
         LogCreatingConnection();
 #if NET7_0_OR_GREATER
-        NpgsqlConnection connection = _dataSource.CreateConnection();
+        return _dataSource.OpenConnection();
 #else
         NpgsqlConnection connection = new(_options.Value.ConnectionString);
-#endif
         connection.Open();
         return connection;
+#endif
     }
 
     public async Task<NpgsqlConnection> OpenConnectionAsync(CancellationToken ct = default)
     {
         LogCreatingConnection();
-#if NET8_0_OR_GREATER
-        NpgsqlConnection connection = _dataSource.CreateConnection();
+#if NET7_0_OR_GREATER
+        return await _dataSource.OpenConnectionAsync(ct);
 #else
         NpgsqlConnection connection = new(_options.Value.ConnectionString);
-#endif
         await connection.OpenAsync(ct);
         return connection;
+#endif
     }
 
     public void Dispose()
@@ -66,6 +66,6 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
 #endif
     }
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Creating a new connection to the database.")]
+    [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Creating a new connection to the database")]
     public partial void LogCreatingConnection();
 }

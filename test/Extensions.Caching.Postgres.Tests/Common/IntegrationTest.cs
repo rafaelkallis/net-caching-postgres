@@ -15,6 +15,7 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
     protected FakeTimeProvider FakeTimeProvider { get; private set; } = new();
     protected HttpClient Client { get; private set; } = null!;
     protected PostgresCache PostgresCache { get; private set; } = null!;
+
     protected PostgresCacheOptions PostgresCacheOptions { get; private set; } = null!;
 
     public virtual async Task InitializeAsync()
@@ -24,9 +25,8 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
         ConfigureLogging(webApplicationBuilder.Logging);
         ConfigureServices(webApplicationBuilder.Services);
         _webApplication = webApplicationBuilder.Build();
-        ConfigureWebApplication(_webApplication);
+        ConfigureApplication(_webApplication);
         await _webApplication.StartAsync();
-
         Client = _webApplication.GetTestClient();
         PostgresCache = _webApplication.Services.GetRequiredService<PostgresCache>();
         PostgresCacheOptions = _webApplication.Services.GetRequiredService<IOptions<PostgresCacheOptions>>().Value;
@@ -58,6 +58,12 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
         logging.AddProvider(loggerProvider);
     }
 
+    protected virtual void ConfigureOptions(PostgresCacheOptions options)
+    {
+        options.ConnectionString = PostgresFixture.ConnectionString;
+        options.EnableGarbageCollection = false;
+    }
+
     protected virtual void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<TimeProvider>(FakeTimeProvider);
@@ -65,15 +71,8 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
         services.AddControllers();
     }
 
-    protected virtual void ConfigureWebApplication(WebApplication app)
+    protected virtual void ConfigureApplication(WebApplication app)
     {
         app.UseRouting();
-    }
-
-    protected virtual void ConfigureOptions(PostgresCacheOptions options)
-    {
-        options.ConnectionString = PostgresFixture.ConnectionString;
-        options.EnableGarbageCollection = false;
-        options.UncorrelateGarbageCollection = false;
     }
 }
