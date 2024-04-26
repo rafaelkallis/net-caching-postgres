@@ -46,15 +46,11 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
 
     protected virtual void ConfigureLogging(ILoggingBuilder logging)
     {
-#if NET7_0_OR_GREATER  
         XUnitLoggerProvider loggerProvider = new(Output, new XUnitLoggerOptions
         {
             IncludeLogLevel = true,
             IncludeCategory = true,
         });
-#else 
-        XUnitLoggerProvider loggerProvider = new(Output);
-#endif
         logging.AddProvider(loggerProvider);
     }
 

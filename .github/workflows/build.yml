@@ -1,11 +1,16 @@
-
 name: Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: 
+      - main
+      - release/*
+      - hotfix/*
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+      - release/*
+      - hotfix/*
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -15,10 +20,9 @@ jobs:
   build:
     strategy:
       matrix: 
-        os: [ubuntu-22.04, ubuntu-20.04]
         postgres-version: [16, 15, 14, 13]
     
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-22.04
     
     services:
       postgres:
@@ -39,10 +43,6 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-          8.0.x
-          7.0.x
-          6.0.x
         cache: true
         cache-dependency-path: '**/packages.lock.json'
     
@@ -65,7 +65,11 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-22.04
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.event_name == 'push' && (
+        startsWith(github.ref, 'refs/heads/release/') ||
+        startsWith(github.ref, 'refs/heads/hotfix/')
+      )
     environment: nuget.org
 
     steps:
@@ -75,10 +79,6 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            8.0.x
-            7.0.x
-            6.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
 
