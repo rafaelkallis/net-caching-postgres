@@ -3,10 +3,12 @@ using Npgsql;
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 
 [Collection(PostgresFixture.CollectionName)]
-public sealed class PostgresCacheMigratorIntegrationTest(
-    ITestOutputHelper output,
-    PostgresFixture postgresFixture) : IntegrationTest(output, postgresFixture)
+public sealed class PostgresCacheMigratorIntegrationTest : IntegrationTest
 {
+    public PostgresCacheMigratorIntegrationTest(ITestOutputHelper output,
+        PostgresFixture postgresFixture) : base(output, postgresFixture)
+    { }
+
     protected override void ConfigureOptions(PostgresCacheOptions options)
     {
         base.ConfigureOptions(options);

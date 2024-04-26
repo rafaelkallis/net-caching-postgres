@@ -5,8 +5,11 @@ using DistributedCacheEntryOptions = Microsoft.Extensions.Caching.Distributed.Di
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 
 [Collection(PostgresFixture.CollectionName)]
-public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : IntegrationTest(output, postgresFixture)
+public sealed class PostgresCacheIntegrationTest : IntegrationTest
 {
+    public PostgresCacheIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : base(output, postgresFixture)
+    { }
+
     private const int ValueSize = 1024;
 
     [Theory]

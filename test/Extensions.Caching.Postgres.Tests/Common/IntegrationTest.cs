@@ -6,12 +6,19 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
-public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : IAsyncLifetime
+public abstract class IntegrationTest : IAsyncLifetime
 {
-    protected ITestOutputHelper Output { get; } = output;
-    protected PostgresFixture PostgresFixture { get; } = postgresFixture;
+    protected ITestOutputHelper Output { get; }
+    protected PostgresFixture PostgresFixture { get; }
 
     private WebApplication? _webApplication;
+
+    protected IntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture)
+    {
+        Output = output;
+        PostgresFixture = postgresFixture;
+    }
+
     protected FakeTimeProvider FakeTimeProvider { get; private set; } = new();
     protected HttpClient Client { get; private set; } = null!;
     protected PostgresCache PostgresCache { get; private set; } = null!;
@@ -46,15 +53,11 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
 
     protected virtual void ConfigureLogging(ILoggingBuilder logging)
     {
-#if NET7_0_OR_GREATER  
         XUnitLoggerProvider loggerProvider = new(Output, new XUnitLoggerOptions
         {
             IncludeLogLevel = true,
             IncludeCategory = true,
         });
-#else 
-        XUnitLoggerProvider loggerProvider = new(Output);
-#endif
         logging.AddProvider(loggerProvider);
     }
 
