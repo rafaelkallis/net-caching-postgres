@@ -5,13 +5,23 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 /// <summary>
 /// SQL queries used by <see cref="PostgresCache"/>.
 /// </summary>
-public class SqlQueries(IOptions<PostgresCacheOptions> options)
+public class SqlQueries
 {
-    private string SchemaName => options.Value.SchemaName;
-    private string TableName => options.Value.TableName;
-    private string Owner => options.Value.Owner;
-    private int KeyMaxLength => options.Value.KeyMaxLength;
-    private string Unlogged => options.Value.UseUnloggedTable ? "UNLOGGED" : string.Empty;
+    private readonly IOptions<PostgresCacheOptions> _options;
+
+    /// <summary>
+    /// SQL queries used by <see cref="PostgresCache"/>.
+    /// </summary>
+    public SqlQueries(IOptions<PostgresCacheOptions> options)
+    {
+        _options = options;
+    }
+
+    private string SchemaName => _options.Value.SchemaName;
+    private string TableName => _options.Value.TableName;
+    private string Owner => _options.Value.Owner;
+    private int KeyMaxLength => _options.Value.KeyMaxLength;
+    private string Unlogged => _options.Value.UseUnloggedTable ? "UNLOGGED" : string.Empty;
 
     internal string Migration() => $@"
         CREATE SCHEMA IF NOT EXISTS ""{SchemaName}"" AUTHORIZATION {Owner};

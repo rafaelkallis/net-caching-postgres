@@ -5,7 +5,8 @@ using NpgsqlTypes;
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
 [CollectionDefinition(PostgresFixture.CollectionName)]
-public class PostgresCollectionFixture : ICollectionFixture<PostgresFixture>;
+public class PostgresCollectionFixture : ICollectionFixture<PostgresFixture>
+{ }
 
 public sealed class PostgresFixture : IAsyncLifetime
 {
@@ -18,26 +19,18 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public string ConnectionString { get; }
     private readonly string _database;
-#if NET7_0_OR_GREATER
     private readonly NpgsqlDataSource _dataSource;
-#endif
 
     public PostgresFixture()
     {
         _database = $"test_{DateTime.UtcNow:o}";
         ConnectionString = CreateConnectionString(database: _database);
-#if NET7_0_OR_GREATER
         _dataSource = NpgsqlDataSource.Create(ConnectionString);
-#endif
     }
 
     public async Task<NpgsqlConnection> OpenConnection()
     {
-#if NET7_0_OR_GREATER
         NpgsqlConnection connection = _dataSource.CreateConnection();
-#else
-        NpgsqlConnection connection = new(ConnectionString);
-#endif
         await connection.OpenAsync();
         return connection;
     }
@@ -98,9 +91,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-#if NET7_0_OR_GREATER
         await _dataSource.DisposeAsync();
-#endif
         string sql = $@"DROP DATABASE ""{_database}"" (FORCE);";
         await using NpgsqlConnection connection = new(CreateConnectionString());
         await connection.OpenAsync();

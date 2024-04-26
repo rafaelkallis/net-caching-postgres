@@ -5,14 +5,24 @@ using Microsoft.Extensions.Options;
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
-internal sealed class PostgresCacheGarbageCollectorBackgroundService(
-    ILogger<PostgresCacheGarbageCollectorBackgroundService> logger,
-    IServiceProvider serviceProvider,
-    IOptions<PostgresCacheOptions> postgresCacheOptions,
-    TimeProvider timeProvider)
-    : BackgroundService
+internal sealed class PostgresCacheGarbageCollectorBackgroundService : BackgroundService
 {
     private ITimer? _timer;
+    private readonly ILogger<PostgresCacheGarbageCollectorBackgroundService> _logger;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IOptions<PostgresCacheOptions> _postgresCacheOptions;
+    private readonly TimeProvider _timeProvider;
+
+    public PostgresCacheGarbageCollectorBackgroundService(ILogger<PostgresCacheGarbageCollectorBackgroundService> logger,
+        IServiceProvider serviceProvider,
+        IOptions<PostgresCacheOptions> postgresCacheOptions,
+        TimeProvider timeProvider)
+    {
+        _logger = logger;
+        _serviceProvider = serviceProvider;
+        _postgresCacheOptions = postgresCacheOptions;
+        _timeProvider = timeProvider;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -23,13 +33,13 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
         }
 
         TimeSpan dueTime = TimeSpan.Zero;
-        if (postgresCacheOptions.Value.UncorrelateGarbageCollection)
+        if (_postgresCacheOptions.Value.UncorrelateGarbageCollection)
         {
-            dueTime = Random.Shared.NextInt64(postgresCacheOptions.Value.GarbageCollectionInterval.ToMilliseconds()).AsMillisecondsTimeSpan();
+            dueTime = Random.Shared.NextInt64(_postgresCacheOptions.Value.GarbageCollectionInterval.ToMilliseconds()).AsMillisecondsTimeSpan();
         }
-        TimeSpan period = postgresCacheOptions.Value.GarbageCollectionInterval;
-        logger.LogDebug("Initializing garbage collection with {DueTime} {Period}", dueTime, period);
-        _timer = timeProvider.CreateTimer(GarbageCollectionTimerCallback, state: stoppingToken, dueTime, period);
+        TimeSpan period = _postgresCacheOptions.Value.GarbageCollectionInterval;
+        _logger.LogDebug("Initializing garbage collection with {DueTime} {Period}", dueTime, period);
+        _timer = _timeProvider.CreateTimer(GarbageCollectionTimerCallback, state: stoppingToken, dueTime, period);
         stoppingToken.Register(StopTimer);
     }
 
@@ -37,32 +47,32 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
     {
         ArgumentNullException.ThrowIfNull(state);
         CancellationToken ct = (CancellationToken)state;
-        if (!postgresCacheOptions.Value.EnableGarbageCollection)
+        if (!_postgresCacheOptions.Value.EnableGarbageCollection)
         {
-            logger.LogDebug("Garbage collection is disabled");
+            _logger.LogDebug("Garbage collection is disabled");
             return;
         }
-        logger.LogInformation("Starting garbage collection");
+        _logger.LogInformation("Starting garbage collection");
         try
         {
-            await using AsyncServiceScope asyncServiceScope = serviceProvider.CreateAsyncScope();
+            await using AsyncServiceScope asyncServiceScope = _serviceProvider.CreateAsyncScope();
             PostgresCache postgresCache = asyncServiceScope.ServiceProvider.GetRequiredService<PostgresCache>();
             await postgresCache.RunGarbageCollection(ct);
         }
         catch (OperationCanceledException)
         {
-            logger.LogDebug("Cancelled");
+            _logger.LogDebug("Cancelled");
         }
         catch (Exception e)
         {
-            logger.LogError(e, "An error occurred while running garbage collection");
+            _logger.LogError(e, "An error occurred while running garbage collection");
             throw;
         }
     }
 
     private void StopTimer()
     {
-        logger.LogDebug("Stopping garbage collection");
+        _logger.LogDebug("Stopping garbage collection");
         _timer?.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
     }
 

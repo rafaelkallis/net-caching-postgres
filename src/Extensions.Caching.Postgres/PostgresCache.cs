@@ -14,33 +14,49 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 /// <summary>
 /// Postgres based <see cref="IDistributedCache"/>.
 /// </summary>
-public sealed partial class PostgresCache(
-    ILogger<PostgresCache> logger,
-    IOptions<PostgresCacheOptions> postgresCacheOptions,
-    NpgsqlConnections npgsqlConnections,
-    SqlQueries sqlQueries,
-    TimeProvider timeProvider)
-    : IDistributedCache
+public sealed partial class PostgresCache : IDistributedCache
 {
+    private readonly ILogger<PostgresCache> _logger;
+    private readonly IOptions<PostgresCacheOptions> _postgresCacheOptions;
+    private readonly NpgsqlConnections _npgsqlConnections;
+    private readonly SqlQueries _sqlQueries;
+    private readonly TimeProvider _timeProvider;
+
+    /// <summary>
+    /// Postgres based <see cref="IDistributedCache"/>.
+    /// </summary>
+    public PostgresCache(ILogger<PostgresCache> logger,
+        IOptions<PostgresCacheOptions> postgresCacheOptions,
+        NpgsqlConnections npgsqlConnections,
+        SqlQueries sqlQueries,
+        TimeProvider timeProvider)
+    {
+        _logger = logger;
+        _postgresCacheOptions = postgresCacheOptions;
+        _npgsqlConnections = npgsqlConnections;
+        _sqlQueries = sqlQueries;
+        _timeProvider = timeProvider;
+    }
+
     private const string SqlStateTransactionRollbackPrefix = "40";
 
     /// <inheritdoc />
     public byte[]? Get(string key)
     {
-        DateTimeOffset now = timeProvider.GetUtcNow();
-        using NpgsqlConnection connection = npgsqlConnections.OpenConnection();
-        using NpgsqlCommand command = new(sqlQueries.GetCacheEntry(), connection);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        using NpgsqlConnection connection = _npgsqlConnections.OpenConnection();
+        using NpgsqlCommand command = new(_sqlQueries.GetCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
         command.Prepare();
         using NpgsqlDataReader dataReader = command.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult);
         if (!dataReader.Read())
         {
-            LogCacheEntryNotFound(logger, key);
+            LogCacheEntryNotFound(_logger, key);
             return null;
         }
 
-        LogCacheEntryFound(logger, key);
+        LogCacheEntryFound(_logger, key);
         byte[] value = dataReader.GetFieldValue<byte[]>("Value");
 
         return value;
@@ -49,20 +65,20 @@ public sealed partial class PostgresCache(
     /// <inheritdoc />
     public async Task<byte[]?> GetAsync(string key, CancellationToken token)
     {
-        DateTimeOffset now = timeProvider.GetUtcNow();
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(token);
-        await using NpgsqlCommand command = new(sqlQueries.GetCacheEntry(), connection);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlCommand command = new(_sqlQueries.GetCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
         await command.PrepareAsync(token);
         await using NpgsqlDataReader dataReader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow | CommandBehavior.SingleResult, token);
         if (!await dataReader.ReadAsync(token))
         {
-            LogCacheEntryNotFound(logger, key);
+            LogCacheEntryNotFound(_logger, key);
             return null;
         }
 
-        LogCacheEntryFound(logger, key);
+        LogCacheEntryFound(_logger, key);
         byte[] value = await dataReader.GetFieldValueAsync<byte[]>("Value", token);
 
         return value;
@@ -71,63 +87,63 @@ public sealed partial class PostgresCache(
     /// <inheritdoc />
     public void Refresh(string key)
     {
-        DateTimeOffset now = timeProvider.GetUtcNow();
-        using NpgsqlConnection connection = npgsqlConnections.OpenConnection();
-        using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry(), connection);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        using NpgsqlConnection connection = _npgsqlConnections.OpenConnection();
+        using NpgsqlCommand command = new(_sqlQueries.RefreshCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
         command.Prepare();
         command.ExecuteNonQuery();
-        LogCacheEntryRefreshed(logger, key);
+        LogCacheEntryRefreshed(_logger, key);
     }
 
     /// <inheritdoc />
     public async Task RefreshAsync(string key, CancellationToken token)
     {
-        DateTimeOffset now = timeProvider.GetUtcNow();
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(token);
-        await using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry(), connection);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlCommand command = new(_sqlQueries.RefreshCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
         await command.PrepareAsync(token);
         await command.ExecuteNonQueryAsync(token);
-        LogCacheEntryRefreshed(logger, key);
+        LogCacheEntryRefreshed(_logger, key);
     }
 
     /// <inheritdoc />
     public void Remove(string key)
     {
-        using NpgsqlConnection connection = npgsqlConnections.OpenConnection();
-        using NpgsqlCommand command = new(sqlQueries.DeleteCacheEntry(), connection);
+        using NpgsqlConnection connection = _npgsqlConnections.OpenConnection();
+        using NpgsqlCommand command = new(_sqlQueries.DeleteCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Prepare();
         command.ExecuteNonQuery();
-        LogCacheEntryRemoved(logger, key);
+        LogCacheEntryRemoved(_logger, key);
     }
 
     /// <inheritdoc />
     public async Task RemoveAsync(string key, CancellationToken token)
     {
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(token);
-        await using NpgsqlCommand command = new(sqlQueries.DeleteCacheEntry(), connection);
+        await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlCommand command = new(_sqlQueries.DeleteCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         await command.PrepareAsync(token);
         await command.ExecuteNonQueryAsync(token);
-        LogCacheEntryRemoved(logger, key);
+        LogCacheEntryRemoved(_logger, key);
     }
 
     /// <inheritdoc />
     public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
     {
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         ValidateOptions(options, now);
         TimeSpan? slidingExpiration = GetSlidingExpiration(options);
         DateTimeOffset? absoluteExpiration = GetAbsoluteExpiration(now, options);
         DateTimeOffset expiresAt = ComputeExpiresAt(now, absoluteExpiration, options);
         Debug.Assert(slidingExpiration is not null || absoluteExpiration is not null);
 
-        using NpgsqlConnection connection = npgsqlConnections.OpenConnection();
-        using NpgsqlCommand command = new(sqlQueries.SetCacheEntry(), connection);
+        using NpgsqlConnection connection = _npgsqlConnections.OpenConnection();
+        using NpgsqlCommand command = new(_sqlQueries.SetCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, expiresAt.ToUnixTimeMilliseconds());
@@ -137,21 +153,21 @@ public sealed partial class PostgresCache(
                                                              ?? DBNull.Value);
         command.Prepare();
         command.ExecuteNonQuery();
-        LogCacheEntryAdded(logger, key);
+        LogCacheEntryAdded(_logger, key);
     }
 
     /// <inheritdoc />
     public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token)
     {
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         ValidateOptions(options, now);
         TimeSpan? slidingExpiration = GetSlidingExpiration(options);
         DateTimeOffset? absoluteExpiration = GetAbsoluteExpiration(now, options);
         DateTimeOffset expiresAt = ComputeExpiresAt(now, absoluteExpiration, options);
         Debug.Assert(slidingExpiration is not null || absoluteExpiration is not null);
 
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(token);
-        await using NpgsqlCommand command = new(sqlQueries.SetCacheEntry(), connection);
+        await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlCommand command = new(_sqlQueries.SetCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, expiresAt.ToUnixTimeMilliseconds());
@@ -161,7 +177,7 @@ public sealed partial class PostgresCache(
                                                              ?? DBNull.Value);
         await command.PrepareAsync(token);
         await command.ExecuteNonQueryAsync(token);
-        LogCacheEntryAdded(logger, key);
+        LogCacheEntryAdded(_logger, key);
     }
 
     /// <summary>
@@ -173,70 +189,70 @@ public sealed partial class PostgresCache(
     /// </remarks>
     public async Task RunGarbageCollection(CancellationToken ct = default)
     {
-        DateTimeOffset now = timeProvider.GetUtcNow();
-        LogDeletingExpiredCacheEntries(logger);
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(ct);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        LogDeletingExpiredCacheEntries(_logger);
+        await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(ct);
 
         try
         {
-            await using NpgsqlCommand command = new(sqlQueries.DeleteExpiredCacheEntries(), connection);
+            await using NpgsqlCommand command = new(_sqlQueries.DeleteExpiredCacheEntries(), connection);
             command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
             await command.PrepareAsync(ct);
             int rows = await command.ExecuteNonQueryAsync(ct);
-            LogDeletedExpiredCacheEntries(logger, rows);
+            LogDeletedExpiredCacheEntries(_logger, rows);
             return;
         }
         catch (PostgresException e) when (e.SqlState.StartsWith(SqlStateTransactionRollbackPrefix, StringComparison.Ordinal))
         {
             // can happen
-            logger.LogWarning(e, "Transaction rollback detected \"{SqlState}\" during garbage collection", e.SqlState);
+            _logger.LogWarning(e, "Transaction rollback detected \"{SqlState}\" during garbage collection", e.SqlState);
         }
         catch (PostgresException e)
         {
-            logger.LogError(e, "Postgres error \"{SqlState}\" during garbage collection", e.SqlState);
+            _logger.LogError(e, "Postgres error \"{SqlState}\" during garbage collection", e.SqlState);
         }
         catch (Exception e)
         {
-            logger.LogError("An error occurred during garbage collection: {Message}", e.Message);
+            _logger.LogError("An error occurred during garbage collection: {Message}", e.Message);
         }
 
-        logger.LogDebug("Retry with lock");
+        _logger.LogDebug("Retry with lock");
 
         try
         {
-            await using NpgsqlCommand command = new(sqlQueries.DeleteExpiredCacheEntriesWithLock(), connection);
+            await using NpgsqlCommand command = new(_sqlQueries.DeleteExpiredCacheEntriesWithLock(), connection);
             command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
             await command.PrepareAsync(ct);
             int rows = await command.ExecuteNonQueryAsync(ct);
-            LogDeletedExpiredCacheEntries(logger, rows);
+            LogDeletedExpiredCacheEntries(_logger, rows);
             return;
         }
         catch (PostgresException e)
         {
-            logger.LogError(e, "Postgres error \"{SqlState}\" during garbage collection", e.SqlState);
+            _logger.LogError(e, "Postgres error \"{SqlState}\" during garbage collection", e.SqlState);
         }
         catch (Exception e)
         {
-            logger.LogError("An error occurred during garbage collection: {Message}", e.Message);
+            _logger.LogError("An error occurred during garbage collection: {Message}", e.Message);
         }
 
-        logger.LogWarning("Final retry with truncate");
+        _logger.LogWarning("Final retry with truncate");
 
         try
         {
-            await using NpgsqlCommand command = new(sqlQueries.TruncateCacheEntries(), connection);
+            await using NpgsqlCommand command = new(_sqlQueries.TruncateCacheEntries(), connection);
             await command.PrepareAsync(ct);
             int rows = await command.ExecuteNonQueryAsync(ct);
-            LogDeletedExpiredCacheEntries(logger, rows);
+            LogDeletedExpiredCacheEntries(_logger, rows);
             return;
         }
         catch (PostgresException e)
         {
-            logger.LogError(e, "Postgres error \"{SqlState}\" during garbage collection", e.SqlState);
+            _logger.LogError(e, "Postgres error \"{SqlState}\" during garbage collection", e.SqlState);
         }
         catch (Exception e)
         {
-            logger.LogError("An error occurred during garbage collection: {Message}", e.Message);
+            _logger.LogError("An error occurred during garbage collection: {Message}", e.Message);
         }
     }
 
@@ -245,13 +261,13 @@ public sealed partial class PostgresCache(
     /// </summary>
     public async Task MigrateAsync(CancellationToken ct)
     {
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(ct);
+        await using NpgsqlConnection connection = await _npgsqlConnections.OpenConnectionAsync(ct);
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable, ct);
-        string sql = sqlQueries.Migration();
+        string sql = _sqlQueries.Migration();
         await using NpgsqlCommand command = new(sql, connection, transaction);
         await command.ExecuteNonQueryAsync(ct);
         await transaction.CommitAsync(ct);
-        LogDatabaseMigrated(logger);
+        LogDatabaseMigrated(_logger);
     }
 
     private static void ValidateOptions(DistributedCacheEntryOptions options, DateTimeOffset now)
@@ -278,7 +294,7 @@ public sealed partial class PostgresCache(
         }
         if (options is { AbsoluteExpiration: null, AbsoluteExpirationRelativeToNow: null })
         {
-            return postgresCacheOptions.Value.DefaultSlidingExpiration;
+            return _postgresCacheOptions.Value.DefaultSlidingExpiration;
         }
         return null;
     }
@@ -314,7 +330,7 @@ public sealed partial class PostgresCache(
             return absoluteExpirationDateTime;
         }
 
-        return now + postgresCacheOptions.Value.DefaultSlidingExpiration;
+        return now + _postgresCacheOptions.Value.DefaultSlidingExpiration;
     }
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "The cache entry with key {Key} was not found.")]
