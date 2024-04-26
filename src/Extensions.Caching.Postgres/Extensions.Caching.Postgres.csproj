@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>8.0.2</VersionPrefix>
+    <VersionPrefix>8.0.4</VersionPrefix>
     <AssemblyName>RafaelKallis.Extensions.Caching.Postgres</AssemblyName>
     <RootNamespace>RafaelKallis.Extensions.Caching.Postgres</RootNamespace>
   </PropertyGroup>
@@ -29,6 +29,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.TimeProvider" Version="8.0.1" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>
