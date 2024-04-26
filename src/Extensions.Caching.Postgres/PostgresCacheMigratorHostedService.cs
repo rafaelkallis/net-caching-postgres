@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
-public class PostgresCacheMigratorHostedService(
+internal class PostgresCacheMigratorHostedService(
     ILogger<PostgresCacheMigratorHostedService> logger,
     IOptions<PostgresCacheOptions> options,
     PostgresCache postgresCache)

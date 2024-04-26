@@ -34,7 +34,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task<NpgsqlConnection> OpenConnection()
     {
 #if NET7_0_OR_GREATER
-        NpgsqlConnection connection = _dataSource.CreateConnection();  
+        NpgsqlConnection connection = _dataSource.CreateConnection();
 #else
         NpgsqlConnection connection = new(ConnectionString);
 #endif

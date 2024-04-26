@@ -1,10 +1,10 @@
 {
-	"name": "library",
+	"name": "net-caching-postgres",
 	"image": "mcr.microsoft.com/devcontainers/base:debian",
 	"features": {
 		"ghcr.io/devcontainers/features/dotnet:2": {
             "version": "8.0",
-            "additionalVersions": "6.0, 7.0"
+            "additionalVersions": "6.0, 7.0, 9.0"
         }
 	},
 	"customizations": {

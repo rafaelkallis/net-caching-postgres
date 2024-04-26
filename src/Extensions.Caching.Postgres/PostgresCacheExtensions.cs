@@ -5,6 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
+/// <summary>
+/// Extensions for the <see cref="IDistributedCache"/> to use a postgres database.
+/// </summary>
 [PublicAPI]
 public static class PostgresCacheExtensions
 {

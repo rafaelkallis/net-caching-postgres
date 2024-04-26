@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
-public sealed class PostgresCacheGarbageCollectorBackgroundService(
+internal sealed class PostgresCacheGarbageCollectorBackgroundService(
     ILogger<PostgresCacheGarbageCollectorBackgroundService> logger,
     IServiceProvider serviceProvider,
     IOptions<PostgresCacheOptions> postgresCacheOptions,

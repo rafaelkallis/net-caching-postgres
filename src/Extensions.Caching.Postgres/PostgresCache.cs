@@ -11,6 +11,9 @@ using NpgsqlTypes;
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
+/// <summary>
+/// Postgres based <see cref="IDistributedCache"/>.
+/// </summary>
 public sealed partial class PostgresCache(
     ILogger<PostgresCache> logger,
     IOptions<PostgresCacheOptions> postgresCacheOptions,
@@ -237,6 +240,9 @@ public sealed partial class PostgresCache(
         }
     }
 
+    /// <summary>
+    /// Performs the migration of the database.
+    /// </summary>
     public async Task MigrateAsync(CancellationToken ct)
     {
         await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(ct);

@@ -2,6 +2,9 @@
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
+/// <summary>
+/// Options for the Postgres cache.
+/// </summary>
 public class PostgresCacheOptions
 {
     /// <summary>

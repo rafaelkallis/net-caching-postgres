@@ -12,6 +12,7 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <NoWarn>$(NoWarn);CA1848</NoWarn>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- We have lots of missing/problematic documentation in 6.0, suppress those warnings. Fixed in 7.0. -->
 <!--    <NoWarn>$(NoWarn);CS1572;CS1573;CS1574;CS1591</NoWarn>-->
@@ -19,7 +20,6 @@
 <!--    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)Npgsql.snk</AssemblyOriginatorKeyFile>-->
 <!--    <SignAssembly>true</SignAssembly>-->
 <!--    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>-->
-<!--    <GenerateDocumentationFile>true</GenerateDocumentationFile>-->
     
     <Authors>Rafael Kallis</Authors>
     <Copyright>Copyright 2024 (c) Rafael Kallis</Copyright>

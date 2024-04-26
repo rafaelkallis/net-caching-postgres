@@ -1,6 +1,6 @@
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
-public class PostgresCacheConstants
+internal class PostgresCacheConstants
 {
     public const string DefaultSchemaName = "public";
     public const string DefaultTableName = "__CacheEntries";

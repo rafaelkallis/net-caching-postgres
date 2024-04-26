@@ -7,15 +7,18 @@ using Npgsql;
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
+/// <summary>
+/// Manages the creation of <see cref="NpgsqlConnection"/>s.
+/// </summary>
 public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
 {
     private readonly ILogger<NpgsqlConnections> _logger;
     private readonly IOptions<PostgresCacheOptions> _options;
 #if NET7_0_OR_GREATER
-    private readonly NpgsqlDataSource _dataSource; 
+    private readonly NpgsqlDataSource _dataSource;
 #endif
 
-    public NpgsqlConnections(ILogger<NpgsqlConnections> logger, IOptions<PostgresCacheOptions> options)
+    internal NpgsqlConnections(ILogger<NpgsqlConnections> logger, IOptions<PostgresCacheOptions> options)
     {
         _logger = logger;
         _options = options;
@@ -25,6 +28,9 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
 #endif
     }
 
+    /// <summary>
+    /// Opens a new connection to the database.
+    /// </summary>
     [MustDisposeResource]
     public NpgsqlConnection OpenConnection()
     {
@@ -38,6 +44,9 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
         return connection;
     }
 
+    /// <summary>
+    /// Opens a new connection to the database.
+    /// </summary>
     public async Task<NpgsqlConnection> OpenConnectionAsync(CancellationToken ct = default)
     {
         LogCreatingConnection();
@@ -50,12 +59,15 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
         return connection;
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
 #if NET7_0_OR_GREATER
         _dataSource.Dispose();
 #endif
     }
+
+    /// <inheritdoc />
 
     public async ValueTask DisposeAsync()
     {
@@ -67,5 +79,5 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
     }
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Creating a new connection to the database")]
-    public partial void LogCreatingConnection();
+    partial void LogCreatingConnection();
 }
