@@ -5,61 +5,77 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 /// <summary>
 /// SQL queries used by <see cref="PostgresCache"/>.
 /// </summary>
-public class SqlQueries(IOptions<PostgresCacheOptions> options)
+public class SqlQueries
 {
-    private string SchemaName => options.Value.SchemaName;
-    private string TableName => options.Value.TableName;
-    private string Owner => options.Value.Owner;
-    private int KeyMaxLength => options.Value.KeyMaxLength;
-    private string Unlogged => options.Value.UseUnloggedTable ? "UNLOGGED" : string.Empty;
+    internal readonly string Migration;
+    internal readonly string GetCacheEntry;
+    internal readonly string SetCacheEntry;
+    internal readonly string RefreshCacheEntry;
+    internal readonly string RemoveCacheEntry;
+    internal readonly string DeleteExpiredCacheEntries;
+    internal readonly string DeleteExpiredCacheEntriesWithLock;
+    internal readonly string TruncateCacheEntries;
 
-    internal string Migration() => $@"
-        CREATE SCHEMA IF NOT EXISTS ""{SchemaName}"" AUTHORIZATION {Owner};
+    /// <inheritdoc cref="SqlQueries" /> 
+    public SqlQueries(IOptions<PostgresCacheOptions> options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        string schemaName = options.Value.SchemaName;
+        string tableName = options.Value.TableName;
+        string owner = options.Value.Owner;
+        int keyMaxLength = options.Value.KeyMaxLength;
+        string unlogged = options.Value.UseUnloggedTable ? "UNLOGGED" : string.Empty;
 
-        CREATE {Unlogged} TABLE IF NOT EXISTS ""{SchemaName}"".""{TableName}"" (
-            ""Key"" VARCHAR({KeyMaxLength}) PRIMARY KEY,
-            ""Value"" BYTEA NOT NULL,
-            ""ExpiresAt"" BIGINT NOT NULL,
-            ""SlidingExpiration"" BIGINT,
-            ""AbsoluteExpiration"" BIGINT
-        );
+        Migration = $@"
+            CREATE SCHEMA IF NOT EXISTS ""{schemaName}"" AUTHORIZATION {owner};
 
-        ALTER TABLE ""{SchemaName}"".""{TableName}"" OWNER TO {Owner};
-        ALTER TABLE ""{SchemaName}"".""{TableName}"" ALTER COLUMN ""Key"" TYPE VARCHAR({KeyMaxLength});
+            CREATE {unlogged} TABLE IF NOT EXISTS ""{schemaName}"".""{tableName}"" (
+                ""Key"" VARCHAR({keyMaxLength}) PRIMARY KEY,
+                ""Value"" BYTEA NOT NULL,
+                ""ExpiresAt"" BIGINT NOT NULL,
+                ""SlidingExpiration"" BIGINT,
+                ""AbsoluteExpiration"" BIGINT
+            );
 
-        CREATE INDEX IF NOT EXISTS ""IX_{TableName}_ExpiresAt"" ON ""{SchemaName}"".""{TableName}"" (""ExpiresAt"");";
+            ALTER TABLE ""{schemaName}"".""{tableName}"" OWNER TO {owner};
+            ALTER TABLE ""{schemaName}"".""{tableName}"" ALTER COLUMN ""Key"" TYPE VARCHAR({keyMaxLength});
 
-    internal string GetCacheEntry() => $@"
-        UPDATE ""{SchemaName}"".""{TableName}"" 
-        SET ""ExpiresAt"" = LEAST(""AbsoluteExpiration"", $2 + ""SlidingExpiration"")
-        WHERE ""Key"" = $1 AND $2 < ""ExpiresAt""
-        RETURNING ""Value"";";
+            CREATE INDEX IF NOT EXISTS ""IX_{tableName}_ExpiresAt"" ON ""{schemaName}"".""{tableName}"" (""ExpiresAt"");";
 
-    internal string RefreshCacheEntry() => $@"
-        UPDATE ""{SchemaName}"".""{TableName}"" 
-        SET ""ExpiresAt"" = LEAST(""AbsoluteExpiration"", $2 + ""SlidingExpiration"")
-        WHERE ""Key"" = $1 AND $2 < ""ExpiresAt"";";
+        GetCacheEntry = $@"
+            UPDATE ""{schemaName}"".""{tableName}"" 
+            SET ""ExpiresAt"" = LEAST(""AbsoluteExpiration"", $2 + ""SlidingExpiration"")
+            WHERE ""Key"" = $1 AND $2 < ""ExpiresAt""
+            RETURNING ""Value"";";
 
-    internal string SetCacheEntry() => $@"
-        INSERT INTO ""{SchemaName}"".""{TableName}"" (""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration"")
-            VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT(""Key"") DO
-        UPDATE SET
-            ""Value"" = EXCLUDED.""Value"",
-            ""ExpiresAt"" = EXCLUDED.""ExpiresAt"",
-            ""SlidingExpiration"" = EXCLUDED.""SlidingExpiration"",
-            ""AbsoluteExpiration"" = EXCLUDED.""AbsoluteExpiration"";";
+        SetCacheEntry = $@"
+            INSERT INTO ""{schemaName}"".""{tableName}"" (""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration"")
+                VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT(""Key"") DO
+            UPDATE SET
+                ""Value"" = EXCLUDED.""Value"",
+                ""ExpiresAt"" = EXCLUDED.""ExpiresAt"",
+                ""SlidingExpiration"" = EXCLUDED.""SlidingExpiration"",
+                ""AbsoluteExpiration"" = EXCLUDED.""AbsoluteExpiration"";";
 
-    internal string DeleteCacheEntry() => $@"
-        DELETE FROM ""{SchemaName}"".""{TableName}"" WHERE ""Key"" = $1";
+        RefreshCacheEntry = $@"
+            UPDATE ""{schemaName}"".""{tableName}"" 
+            SET ""ExpiresAt"" = LEAST(""AbsoluteExpiration"", $2 + ""SlidingExpiration"")
+            WHERE ""Key"" = $1 AND $2 < ""ExpiresAt"";";
 
-    internal string DeleteExpiredCacheEntries() => $@"
-        DELETE FROM ""{SchemaName}"".""{TableName}"" WHERE $1 >= ""ExpiresAt"";";
+        RemoveCacheEntry = $@"
+            DELETE FROM ""{schemaName}"".""{tableName}"" WHERE ""Key"" = $1";
 
-    internal string DeleteExpiredCacheEntriesWithLock() => $@"
-        LOCK TABLE ""{SchemaName}"".""{TableName}"" IN ROW EXCLUSIVE MODE;
-        DELETE FROM ""{SchemaName}"".""{TableName}"" WHERE $1 >= ""ExpiresAt"";";
+        DeleteExpiredCacheEntries = $@"
+            DELETE FROM ""{schemaName}"".""{tableName}"" WHERE $1 >= ""ExpiresAt"";";
 
-    internal string TruncateCacheEntries() => $@"
-        TRUNCATE TABLE ""{SchemaName}"".""{TableName}"";";
+        DeleteExpiredCacheEntriesWithLock = $@"
+            LOCK TABLE ""{schemaName}"".""{tableName}"" IN ROW EXCLUSIVE MODE;
+            DELETE FROM ""{schemaName}"".""{tableName}"" WHERE $1 >= ""ExpiresAt"";";
+
+        TruncateCacheEntries = $@"
+            TRUNCATE TABLE ""{schemaName}"".""{tableName}"";";
+    }
+
+
 }

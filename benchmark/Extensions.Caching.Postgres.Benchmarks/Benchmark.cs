@@ -86,5 +86,5 @@ public abstract class Benchmark
     }
 
     private static string CreateConnectionString(string host = DefaultHost, string database = DefaultDatabase, string username = DefaultUsername, string password = DefaultPassword) =>
-        $"Host={host};Database={database};Username={username};Password={password};Include Error Detail=true;Maximum Pool Size=20";
+        $"Host={host};Database={database};Username={username};Password={password};Include Error Detail=true";
 }

@@ -33,11 +33,9 @@ public sealed partial class PostgresCache(
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.GetCacheEntry(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
+        using NpgsqlCommand command = new(sqlQueries.GetCacheEntry, connection);
+        command.Parameters.AddWithValue<string>(NpgsqlDbType.Varchar, key);
+        command.Parameters.AddWithValue<long>(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
         command.Prepare();
         using NpgsqlDataReader dataReader = command.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult);
 
@@ -66,11 +64,9 @@ public sealed partial class PostgresCache(
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
         await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
 
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.GetCacheEntry(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
+        using NpgsqlCommand command = new(sqlQueries.GetCacheEntry, connection);
+        command.Parameters.AddWithValue<string>(NpgsqlDbType.Varchar, key);
+        command.Parameters.AddWithValue<long>(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
         await command.PrepareAsync(token).ConfigureAwait(false);
 
         NpgsqlDataReader dataReader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow | CommandBehavior.SingleResult, token).ConfigureAwait(false);
@@ -83,7 +79,8 @@ public sealed partial class PostgresCache(
             return null;
         }
 
-        byte[] value = await dataReader.GetFieldValueAsync<byte[]>("Value", token).ConfigureAwait(false);
+
+        byte[] value = await dataReader.GetFieldValueAsync<byte[]>(0, token).ConfigureAwait(false);
 
         LogCacheEntryFound(logger, key);
         PostgresCacheEventSource.Log.CacheGet(key, stopwatch.Elapsed, true, value.Length);
@@ -106,14 +103,12 @@ public sealed partial class PostgresCache(
         Debug.Assert(slidingExpiration is not null || absoluteExpiration is not null);
 
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.SetCacheEntry(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+        using NpgsqlCommand command = new(sqlQueries.SetCacheEntry, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, expiresAt.ToUnixTimeMilliseconds());
-        command.Parameters.AddWithNullableValue(NpgsqlDbType.Bigint, slidingExpiration?.ToMilliseconds());
-        command.Parameters.AddWithNullableValue(NpgsqlDbType.Bigint, absoluteExpiration?.ToUnixTimeMilliseconds());
+        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, slidingExpiration?.ToMilliseconds());
+        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, absoluteExpiration?.ToUnixTimeMilliseconds());
         command.Prepare();
         command.ExecuteNonQuery();
 
@@ -138,14 +133,12 @@ public sealed partial class PostgresCache(
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
         await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
 
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.SetCacheEntry(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+        using NpgsqlCommand command = new(sqlQueries.SetCacheEntry, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, expiresAt.ToUnixTimeMilliseconds());
-        command.Parameters.AddWithNullableValue(NpgsqlDbType.Bigint, slidingExpiration?.ToMilliseconds());
-        command.Parameters.AddWithNullableValue(NpgsqlDbType.Bigint, absoluteExpiration?.ToUnixTimeMilliseconds());
+        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, slidingExpiration?.ToMilliseconds());
+        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, absoluteExpiration?.ToUnixTimeMilliseconds());
         await command.PrepareAsync(token).ConfigureAwait(false);
         await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
 
@@ -160,9 +153,7 @@ public sealed partial class PostgresCache(
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+        using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
         command.Prepare();
@@ -182,9 +173,7 @@ public sealed partial class PostgresCache(
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
         await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
 
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+        using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
         await command.PrepareAsync(token).ConfigureAwait(false);
@@ -200,9 +189,7 @@ public sealed partial class PostgresCache(
         using Activity? activity = PostgresCacheActivitySource.StartRemoveActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.DeleteCacheEntry(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+        using NpgsqlCommand command = new(sqlQueries.RemoveCacheEntry, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Prepare();
         command.ExecuteNonQuery();
@@ -220,9 +207,7 @@ public sealed partial class PostgresCache(
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
         await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
 
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.DeleteCacheEntry(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+        using NpgsqlCommand command = new(sqlQueries.RemoveCacheEntry, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         await command.PrepareAsync(token).ConfigureAwait(false);
         await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
@@ -249,9 +234,7 @@ public sealed partial class PostgresCache(
 
         try
         {
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-            using NpgsqlCommand command = new(sqlQueries.DeleteExpiredCacheEntries(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+            using NpgsqlCommand command = new(sqlQueries.DeleteExpiredCacheEntries, connection);
             command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
             await command.PrepareAsync(ct).ConfigureAwait(false);
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -273,9 +256,7 @@ public sealed partial class PostgresCache(
 
         try
         {
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-            using NpgsqlCommand command = new(sqlQueries.DeleteExpiredCacheEntriesWithLock(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+            using NpgsqlCommand command = new(sqlQueries.DeleteExpiredCacheEntriesWithLock, connection);
             command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
             await command.PrepareAsync(ct).ConfigureAwait(false);
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -292,9 +273,7 @@ public sealed partial class PostgresCache(
 
         try
         {
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-            using NpgsqlCommand command = new(sqlQueries.TruncateCacheEntries(), connection);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+            using NpgsqlCommand command = new(sqlQueries.TruncateCacheEntries, connection);
             await command.PrepareAsync(ct).ConfigureAwait(false);
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             LogDeletedExpiredCacheEntries(logger, rows);
@@ -319,9 +298,7 @@ public sealed partial class PostgresCache(
         NpgsqlTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable, ct).ConfigureAwait(false);
         await using ConfiguredAsyncDisposable _tcad = transaction.ConfigureAwait(false);
 
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using NpgsqlCommand command = new(sqlQueries.Migration(), connection, transaction);
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+        using NpgsqlCommand command = new(sqlQueries.Migration, connection, transaction);
         await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         await transaction.CommitAsync(ct).ConfigureAwait(false);
         LogDatabaseMigrated(logger);

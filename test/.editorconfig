@@ -1,6 +1,9 @@
 #### .NET Coding Conventions ####
 [*.{cs,vb}]
 
+# CA1707: Remove the underscore
+dotnet_diagnostic.CA1707.severity = none
+
 # CA2007: Consider calling ConfigureAwait on the awaited task
 dotnet_diagnostic.CA2007.severity = none
 
@@ -9,3 +12,6 @@ dotnet_diagnostic.CA2100.severity = none
 
 # CA5394: Do not use insecure randomness
 dotnet_diagnostic.CA5394.severity = none
+
+# CS1591: Missing XML comment
+dotnet_diagnostic.CS1591.severity = none

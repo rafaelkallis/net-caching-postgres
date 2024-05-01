@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 using JetBrains.Annotations;
 
 using Microsoft.Extensions.Caching.Distributed;
@@ -38,27 +40,23 @@ public static class PostgresCacheExtensions
         return services;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static DateTime AsUnixTimeMillisecondsDateTime(this long unixTimeMilliseconds) =>
         DateTime.UnixEpoch.AddMilliseconds(unixTimeMilliseconds);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long ToUnixTimeMilliseconds(this DateTime dateTime) =>
         dateTime.Subtract(DateTime.UnixEpoch).ToMilliseconds();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static TimeSpan AsMillisecondsTimeSpan(this long unixTimeMilliseconds) =>
         TimeSpan.FromMilliseconds(Convert.ToDouble(unixTimeMilliseconds));
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long ToMilliseconds(this TimeSpan timeSpan) =>
         Convert.ToInt64(timeSpan.TotalMilliseconds);
 
-    internal static NpgsqlParameter AddWithNullableValue(this NpgsqlParameterCollection parameters, NpgsqlDbType dbType, object? value)
-    {
-        if (value == null)
-        {
-            return parameters.AddWithValue(dbType, DBNull.Value);
-        }
-        else
-        {
-            return parameters.AddWithValue(dbType, value);
-        }
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static NpgsqlParameter AddWithValue<T>(this NpgsqlParameterCollection parameters, NpgsqlDbType dbType, T? value) =>
+        parameters.Add(new() { NpgsqlDbType = dbType, Value = value ?? DBNull.Value as object });
 }
