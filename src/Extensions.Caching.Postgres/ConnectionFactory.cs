@@ -10,14 +10,14 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 /// <summary>
 /// Manages the creation of <see cref="NpgsqlConnection"/>s.
 /// </summary>
-public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
+public sealed partial class ConnectionFactory : IDisposable, IAsyncDisposable
 {
-    private readonly ILogger<NpgsqlConnections> _logger;
+    private readonly ILogger<ConnectionFactory> _logger;
     private readonly IOptions<PostgresCacheOptions> _options;
     private readonly NpgsqlDataSource _dataSource;
 
-    /// <inheritdoc cref="NpgsqlConnections"/>
-    public NpgsqlConnections(ILogger<NpgsqlConnections> logger, IOptions<PostgresCacheOptions> options)
+    /// <inheritdoc cref="ConnectionFactory"/>
+    public ConnectionFactory(ILogger<ConnectionFactory> logger, IOptions<PostgresCacheOptions> options)
     {
         _logger = logger;
         _options = options;

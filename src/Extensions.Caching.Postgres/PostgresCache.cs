@@ -17,7 +17,7 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 public sealed partial class PostgresCache(
     ILogger<PostgresCache> logger,
     IOptions<PostgresCacheOptions> postgresCacheOptions,
-    NpgsqlConnections npgsqlConnections,
+    ConnectionFactory connectionFactory,
     SqlQueries sqlQueries,
     TimeProvider timeProvider)
     : IDistributedCache
@@ -30,7 +30,7 @@ public sealed partial class PostgresCache(
         using Activity? activity = PostgresCacheActivitySource.StartGetActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
-        using NpgsqlConnection connection = npgsqlConnections.OpenConnection();
+        using NpgsqlConnection connection = connectionFactory.OpenConnection();
         using NpgsqlCommand command = new(sqlQueries.GetCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
@@ -58,7 +58,7 @@ public sealed partial class PostgresCache(
         using Activity? activity = PostgresCacheActivitySource.StartGetActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token);
         await using NpgsqlCommand command = new(sqlQueries.GetCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
@@ -92,7 +92,7 @@ public sealed partial class PostgresCache(
         DateTimeOffset expiresAt = ComputeExpiresAt(now, absoluteExpiration, options);
         Debug.Assert(slidingExpiration is not null || absoluteExpiration is not null);
 
-        using NpgsqlConnection connection = npgsqlConnections.OpenConnection();
+        using NpgsqlConnection connection = connectionFactory.OpenConnection();
         using NpgsqlCommand command = new(sqlQueries.SetCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
@@ -120,7 +120,7 @@ public sealed partial class PostgresCache(
         DateTimeOffset expiresAt = ComputeExpiresAt(now, absoluteExpiration, options);
         Debug.Assert(slidingExpiration is not null || absoluteExpiration is not null);
 
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token);
         await using NpgsqlCommand command = new(sqlQueries.SetCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
@@ -142,7 +142,7 @@ public sealed partial class PostgresCache(
         using Activity? activity = PostgresCacheActivitySource.StartRefreshActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
-        using NpgsqlConnection connection = npgsqlConnections.OpenConnection();
+        using NpgsqlConnection connection = connectionFactory.OpenConnection();
         using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
@@ -159,7 +159,7 @@ public sealed partial class PostgresCache(
         using Activity? activity = PostgresCacheActivitySource.StartRefreshActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token);
         await using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
@@ -175,7 +175,7 @@ public sealed partial class PostgresCache(
     {
         using Activity? activity = PostgresCacheActivitySource.StartRemoveActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
-        using NpgsqlConnection connection = npgsqlConnections.OpenConnection();
+        using NpgsqlConnection connection = connectionFactory.OpenConnection();
         using NpgsqlCommand command = new(sqlQueries.DeleteCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         command.Prepare();
@@ -190,7 +190,7 @@ public sealed partial class PostgresCache(
     {
         using Activity? activity = PostgresCacheActivitySource.StartRemoveActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(token);
+        await using NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token);
         await using NpgsqlCommand command = new(sqlQueries.DeleteCacheEntry(), connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         await command.PrepareAsync(token);
@@ -213,7 +213,7 @@ public sealed partial class PostgresCache(
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
         LogDeletingExpiredCacheEntries(logger);
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(ct);
+        await using NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(ct);
 
         try
         {
@@ -287,7 +287,7 @@ public sealed partial class PostgresCache(
     public async Task MigrateAsync(CancellationToken ct)
     {
         using Activity? activity = PostgresCacheActivitySource.StartMigrationActivity();
-        await using NpgsqlConnection connection = await npgsqlConnections.OpenConnectionAsync(ct);
+        await using NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(ct);
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         string sql = sqlQueries.Migration();
         await using NpgsqlCommand command = new(sql, connection, transaction);

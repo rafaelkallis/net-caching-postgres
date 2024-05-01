@@ -8,7 +8,6 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 /// <summary>
 /// Extensions for the <see cref="IDistributedCache"/> to use a postgres database.
 /// </summary>
-[PublicAPI]
 public static class PostgresCacheExtensions
 {
     /// <summary>
@@ -25,7 +24,7 @@ public static class PostgresCacheExtensions
             .ValidateOnStart();
 
         services.AddSingleton<SqlQueries>();
-        services.AddSingleton<NpgsqlConnections>();
+        services.AddSingleton<ConnectionFactory>();
         services.AddSingleton<PostgresCache>();
         services.AddSingleton<IDistributedCache>(sp => sp.GetRequiredService<PostgresCache>());
 
