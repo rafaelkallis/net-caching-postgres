@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <RootNamespace>RafaelKallis.Extensions.Caching.Postgres.Benchmark</RootNamespace>
+    <RootNamespace>RafaelKallis.Extensions.Caching.Postgres.Benchmarks</RootNamespace>
   </PropertyGroup>
 
 </Project>

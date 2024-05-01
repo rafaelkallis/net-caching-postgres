@@ -36,6 +36,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async Task Insert(CacheEntry cacheEntry, string schema = PostgresCacheConstants.DefaultSchemaName, string table = PostgresCacheConstants.DefaultTableName)
     {
+        ArgumentNullException.ThrowIfNull(cacheEntry);
         string sql = $@"
             INSERT INTO ""{schema}"".""{table}""
             (""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration"")
@@ -45,8 +46,8 @@ public sealed class PostgresFixture : IAsyncLifetime
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, cacheEntry.Key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, cacheEntry.Value);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheEntry.ExpiresAt.ToUnixTimeMilliseconds());
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheEntry.SlidingExpiration?.ToMilliseconds() as object ?? DBNull.Value);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheEntry.AbsoluteExpiration?.ToUnixTimeMilliseconds() as object ?? DBNull.Value);
+        command.Parameters.AddWithNullableValue(NpgsqlDbType.Bigint, cacheEntry.SlidingExpiration?.ToMilliseconds());
+        command.Parameters.AddWithNullableValue(NpgsqlDbType.Bigint, cacheEntry.AbsoluteExpiration?.ToUnixTimeMilliseconds());
         await command.PrepareAsync();
         await command.ExecuteNonQueryAsync();
     }
@@ -69,12 +70,12 @@ public sealed class PostgresFixture : IAsyncLifetime
 
         return new CacheEntry(
             Key: dataReader.GetString(0),
-            Value: dataReader.GetFieldValue<byte[]>(1),
+            Value: await dataReader.GetFieldValueAsync<byte[]>(1),
             ExpiresAt: dataReader.GetInt64(2).AsUnixTimeMillisecondsDateTime(),
-            SlidingExpiration: !dataReader.IsDBNull(3)
+            SlidingExpiration: !await dataReader.IsDBNullAsync(3)
                 ? dataReader.GetInt64(3).AsMillisecondsTimeSpan()
                 : null,
-            AbsoluteExpiration: !dataReader.IsDBNull(4)
+            AbsoluteExpiration: !await dataReader.IsDBNullAsync(4)
                 ? dataReader.GetInt64(4).AsUnixTimeMillisecondsDateTime()
                 : null);
     }

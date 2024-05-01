@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 
 using Npgsql;
 
-namespace RafaelKallis.Extensions.Caching.Postgres.Benchmark;
+namespace RafaelKallis.Extensions.Caching.Postgres.Benchmarks;
 
 public abstract class Benchmark
 {

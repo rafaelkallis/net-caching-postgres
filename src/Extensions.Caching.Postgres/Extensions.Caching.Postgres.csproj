@@ -8,7 +8,7 @@
   
   <ItemGroup>
     <InternalsVisibleTo Include="Extensions.Caching.Postgres.Tests" />
-    <InternalsVisibleTo Include="Extensions.Caching.Postgres.Benchmark" />
+    <InternalsVisibleTo Include="Extensions.Caching.Postgres.Benchmarks" />
   </ItemGroup>
 
   <ItemGroup>

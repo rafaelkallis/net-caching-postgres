@@ -3,6 +3,10 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
+using Npgsql;
+
+using NpgsqlTypes;
+
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
 /// <summary>
@@ -45,4 +49,16 @@ public static class PostgresCacheExtensions
 
     internal static long ToMilliseconds(this TimeSpan timeSpan) =>
         Convert.ToInt64(timeSpan.TotalMilliseconds);
+
+    internal static NpgsqlParameter AddWithNullableValue(this NpgsqlParameterCollection parameters, NpgsqlDbType dbType, object? value)
+    {
+        if (value == null)
+        {
+            return parameters.AddWithValue(dbType, DBNull.Value);
+        }
+        else
+        {
+            return parameters.AddWithValue(dbType, value);
+        }
+    }
 }

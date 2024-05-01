@@ -29,12 +29,12 @@ public sealed class PostgresCacheMigratorIntegrationTest(
 
         if (scenario == MigrationScenaria.DifferentSchemaName)
         {
-            schemaName = Guid.NewGuid().ToString().Replace("-", "");
+            schemaName = Guid.NewGuid().ToString().Replace("-", "", StringComparison.Ordinal);
         }
         else
         if (scenario == MigrationScenaria.DifferentTableName)
         {
-            tableName = Guid.NewGuid().ToString().Replace("-", "");
+            tableName = Guid.NewGuid().ToString().Replace("-", "", StringComparison.Ordinal);
         }
 
         PostgresCacheOptions.SchemaName = schemaName;

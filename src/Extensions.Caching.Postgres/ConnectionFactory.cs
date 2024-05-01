@@ -44,7 +44,7 @@ public sealed partial class ConnectionFactory : IDisposable, IAsyncDisposable
     {
         LogCreatingConnection();
         NpgsqlConnection connection = _dataSource.CreateConnection();
-        await connection.OpenAsync(ct);
+        await connection.OpenAsync(ct).ConfigureAwait(false);
         return connection;
     }
 
@@ -58,7 +58,7 @@ public sealed partial class ConnectionFactory : IDisposable, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _dataSource.DisposeAsync();
+        await _dataSource.DisposeAsync().ConfigureAwait(false);
     }
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Creating a new connection to the database")]
