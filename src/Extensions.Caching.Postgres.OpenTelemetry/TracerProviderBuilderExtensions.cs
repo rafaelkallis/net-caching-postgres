@@ -10,9 +10,9 @@ public static class TracerProviderBuilderExtensions
     /// <summary>
     /// Subscribes to the postgres cache activity source to enable OpenTelemetry tracing.
     /// </summary>
-    public static TracerProviderBuilder AddPostgresDistributedCacheInstrumentation(this TracerProviderBuilder builder)
+    public static TracerProviderBuilder AddDistributedPostgresCacheInstrumentation(this TracerProviderBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        return builder.AddSource("RafaelKallis.Extensions.Caching.Postgres");
+        return builder.AddSource("Caching.Postgres");
     }
 }

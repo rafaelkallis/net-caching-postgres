@@ -4,7 +4,7 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 
 internal class PostgresCacheEventSource : EventSource
 {
-    public const string EventSourceName = "RafaelKallis.Extensions.Caching.Postgres";
+    public const string EventSourceName = "Caching.Postgres";
 
     const int CacheGetEventId = 1;
     const int CacheSetEventId = 2;

@@ -93,7 +93,9 @@ public sealed partial class PostgresCache(
     {
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(options);
-        using Activity? activity = PostgresCacheActivitySource.StartSetActivity(key);
+        using Activity? activity = PostgresCacheActivitySource.StartSetActivity(key: key,
+            absoluteExpirationRelativeToNow: options.AbsoluteExpirationRelativeToNow,
+            slidingExpiration: options.SlidingExpiration);
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
         ValidateOptions(options, now);
@@ -121,7 +123,9 @@ public sealed partial class PostgresCache(
     {
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(options);
-        using Activity? activity = PostgresCacheActivitySource.StartSetActivity(key);
+        using Activity? activity = PostgresCacheActivitySource.StartSetActivity(key: key,
+            absoluteExpirationRelativeToNow: options.AbsoluteExpirationRelativeToNow,
+            slidingExpiration: options.SlidingExpiration);
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
         ValidateOptions(options, now);
@@ -245,6 +249,7 @@ public sealed partial class PostgresCache(
         catch (NpgsqlException e) when (e.SqlState?.StartsWith(SqlStateTransactionRollbackPrefix, StringComparison.Ordinal) ?? false)
         {
             // can happen
+            activity?.AddEvent(new("Transaction Rollback"));
             logger.LogWarning(e, "Transaction rollback detected \"{SqlState}\" during garbage collection", e.SqlState);
         }
         catch (NpgsqlException e)
