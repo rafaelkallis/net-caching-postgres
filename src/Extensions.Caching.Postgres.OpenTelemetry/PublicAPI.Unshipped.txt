@@ -1,0 +1,3 @@
+#nullable enable
+Extensions.Caching.Postgres.OpenTelemetry.TracerProviderBuilderExtensions
+static Extensions.Caching.Postgres.OpenTelemetry.TracerProviderBuilderExtensions.AddPostgresDistributedCacheInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder! builder) -> OpenTelemetry.Trace.TracerProviderBuilder!
