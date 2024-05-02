@@ -46,8 +46,8 @@ public sealed class PostgresFixture : IAsyncLifetime
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, cacheEntry.Key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, cacheEntry.Value);
         command.Parameters.AddWithValue(NpgsqlDbType.Bigint, cacheEntry.ExpiresAt.ToUnixTimeMilliseconds());
-        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, cacheEntry.SlidingExpiration?.ToMilliseconds());
-        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, cacheEntry.AbsoluteExpiration?.ToUnixTimeMilliseconds());
+        command.Parameters.AddWithValue<long?>(NpgsqlDbType.Bigint, cacheEntry.SlidingExpiration?.ToMilliseconds());
+        command.Parameters.AddWithValue<long?>(NpgsqlDbType.Bigint, cacheEntry.AbsoluteExpiration?.ToUnixTimeMilliseconds());
         await command.PrepareAsync();
         await command.ExecuteNonQueryAsync();
     }
