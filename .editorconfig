@@ -368,8 +368,8 @@ dotnet_naming_style.s_camelcase.required_suffix =
 dotnet_naming_style.s_camelcase.word_separator = 
 dotnet_naming_style.s_camelcase.capitalization = camel_case
 
-# IDE0160: Convert to block-scoped namespace
-csharp_style_namespace_declarations = file_scoped:error
+# CA1848: Use the LoggerMessage delegates
+dotnet_diagnostic.CA1848.severity = none
 
-# IDE0161: Convert to file-scoped namespace
-dotnet_diagnostic.IDE0161.severity = error
+# CA2100: Review SQL queries for security vulnerabilities
+dotnet_diagnostic.CA2100.severity = none

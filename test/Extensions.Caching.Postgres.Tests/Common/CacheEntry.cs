@@ -2,7 +2,7 @@ namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
 public record CacheEntry(
     string Key,
-    byte[] Value,
+    ICollection<byte> Value,
     DateTimeOffset ExpiresAt,
     TimeSpan? SlidingExpiration,
     DateTimeOffset? AbsoluteExpiration);

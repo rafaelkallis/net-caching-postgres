@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,9 +16,8 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
 {
     private ITimer? _timer;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await Task.CompletedTask;
         if (_timer is not null)
         {
             throw new InvalidOperationException("The timer is already initialized.");
@@ -25,12 +26,15 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
         TimeSpan dueTime = TimeSpan.Zero;
         if (postgresCacheOptions.Value.UncorrelateGarbageCollection)
         {
+#pragma warning disable CA5394 // Do not use insecure randomness
             dueTime = Random.Shared.NextInt64(postgresCacheOptions.Value.GarbageCollectionInterval.ToMilliseconds()).AsMillisecondsTimeSpan();
+#pragma warning restore CA5394 // Do not use insecure randomness
         }
         TimeSpan period = postgresCacheOptions.Value.GarbageCollectionInterval;
         logger.LogDebug("Initializing garbage collection with {DueTime} {Period}", dueTime, period);
         _timer = timeProvider.CreateTimer(GarbageCollectionTimerCallback, state: stoppingToken, dueTime, period);
         stoppingToken.Register(StopTimer);
+        return Task.CompletedTask;
     }
 
     private async void GarbageCollectionTimerCallback(object? state)
@@ -45,9 +49,10 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
         logger.LogInformation("Starting garbage collection");
         try
         {
-            await using AsyncServiceScope asyncServiceScope = serviceProvider.CreateAsyncScope();
+            AsyncServiceScope asyncServiceScope = serviceProvider.CreateAsyncScope();
+            await using ConfiguredAsyncDisposable _ = asyncServiceScope.ConfigureAwait(false);
             PostgresCache postgresCache = asyncServiceScope.ServiceProvider.GetRequiredService<PostgresCache>();
-            await postgresCache.RunGarbageCollection(ct);
+            await postgresCache.RunGarbageCollection(ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

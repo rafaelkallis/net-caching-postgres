@@ -10,14 +10,14 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 /// <summary>
 /// Manages the creation of <see cref="NpgsqlConnection"/>s.
 /// </summary>
-public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
+public sealed partial class ConnectionFactory : IDisposable, IAsyncDisposable
 {
-    private readonly ILogger<NpgsqlConnections> _logger;
+    private readonly ILogger<ConnectionFactory> _logger;
     private readonly IOptions<PostgresCacheOptions> _options;
     private readonly NpgsqlDataSource _dataSource;
 
-    /// <inheritdoc cref="NpgsqlConnections"/>
-    public NpgsqlConnections(ILogger<NpgsqlConnections> logger, IOptions<PostgresCacheOptions> options)
+    /// <inheritdoc cref="ConnectionFactory"/>
+    public ConnectionFactory(ILogger<ConnectionFactory> logger, IOptions<PostgresCacheOptions> options)
     {
         _logger = logger;
         _options = options;
@@ -44,7 +44,7 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
     {
         LogCreatingConnection();
         NpgsqlConnection connection = _dataSource.CreateConnection();
-        await connection.OpenAsync(ct);
+        await connection.OpenAsync(ct).ConfigureAwait(false);
         return connection;
     }
 
@@ -58,7 +58,7 @@ public sealed partial class NpgsqlConnections : IDisposable, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _dataSource.DisposeAsync();
+        await _dataSource.DisposeAsync().ConfigureAwait(false);
     }
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Creating a new connection to the database")]

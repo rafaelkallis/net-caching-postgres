@@ -1,0 +1,42 @@
+RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory
+RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.ConnectionFactory(Microsoft.Extensions.Logging.ILogger<RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory!>! logger, Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! options) -> void
+RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.Dispose() -> void
+RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.DisposeAsync() -> System.Threading.Tasks.ValueTask
+RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.OpenConnection() -> Npgsql.NpgsqlConnection!
+RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.OpenConnectionAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Npgsql.NpgsqlConnection!>!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.Get(string! key) -> byte[]?
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.GetAsync(string! key, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task<byte[]?>!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.MigrateAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.PostgresCache(Microsoft.Extensions.Logging.ILogger<RafaelKallis.Extensions.Caching.Postgres.PostgresCache!>! logger, Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! postgresCacheOptions, RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory! connectionFactory, RafaelKallis.Extensions.Caching.Postgres.SqlQueries! sqlQueries, System.TimeProvider! timeProvider) -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.Refresh(string! key) -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.RefreshAsync(string! key, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.Remove(string! key) -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.RemoveAsync(string! key, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.RunGarbageCollection(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.Set(string! key, byte[]! value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions! options) -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCache.SetAsync(string! key, byte[]! value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions! options, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheExtensions
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.ConnectionString.get -> string?
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.ConnectionString.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.DefaultSlidingExpiration.get -> System.TimeSpan
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.DefaultSlidingExpiration.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.GarbageCollectionInterval.get -> System.TimeSpan
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.GarbageCollectionInterval.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.KeyMaxLength.get -> int
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.KeyMaxLength.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.MigrateOnStart.get -> bool
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.MigrateOnStart.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.Owner.get -> string!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.Owner.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.PostgresCacheOptions() -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.SchemaName.get -> string!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.SchemaName.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.TableName.get -> string!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.TableName.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.UseUnloggedTable.get -> bool
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.UseUnloggedTable.set -> void
+RafaelKallis.Extensions.Caching.Postgres.SqlQueries
+RafaelKallis.Extensions.Caching.Postgres.SqlQueries.SqlQueries(Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! options) -> void
+static RafaelKallis.Extensions.Caching.Postgres.PostgresCacheExtensions.AddDistributedPostgresCache(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>? configureOptions = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

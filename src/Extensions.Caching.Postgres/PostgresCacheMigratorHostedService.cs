@@ -17,7 +17,7 @@ internal class PostgresCacheMigratorHostedService(
             logger.LogInformation("Skipping migration");
             return;
         }
-        await postgresCache.MigrateAsync(cancellationToken);
+        await postgresCache.MigrateAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

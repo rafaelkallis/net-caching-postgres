@@ -46,16 +46,19 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
 
     protected virtual void ConfigureLogging(ILoggingBuilder logging)
     {
+#pragma warning disable CA2000 // Dispose objects before losing scope
         XUnitLoggerProvider loggerProvider = new(Output, new XUnitLoggerOptions
         {
             IncludeLogLevel = true,
             IncludeCategory = true,
         });
+#pragma warning restore CA2000 // Dispose objects before losing scope
         logging.AddProvider(loggerProvider);
     }
 
     protected virtual void ConfigureOptions(PostgresCacheOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         options.ConnectionString = PostgresFixture.ConnectionString;
         options.EnableGarbageCollection = false;
     }

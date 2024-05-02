@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -9,8 +9,7 @@
     <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
 
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <NoWarn>$(NoWarn);CA1848</NoWarn>
+    <AnalysisLevel>latest-all</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
@@ -29,7 +28,7 @@
     <PackageProjectUrl>https://github.com/rafaelkallis/net-caching-postgres</PackageProjectUrl>
     <!--    <PackageIcon>postgresql.png</PackageIcon>-->
     <Description>Distributed caching implementation using Postgres.</Description>
-    <PackageTags>distributedcache;distributed;cache;caching;postgres</PackageTags>
+    <PackageTags>cache;distributedcache;postgres;postgresql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

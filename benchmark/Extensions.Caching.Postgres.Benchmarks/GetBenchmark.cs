@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 
-namespace RafaelKallis.Extensions.Caching.Postgres.Benchmark;
+namespace RafaelKallis.Extensions.Caching.Postgres.Benchmarks;
 
 public class GetBenchmark : Benchmark
 {

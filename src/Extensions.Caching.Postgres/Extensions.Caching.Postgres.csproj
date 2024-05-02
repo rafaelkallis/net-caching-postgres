@@ -1,22 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>9.0.0-preview</VersionPrefix>
+    <VersionPrefix>8.0.6</VersionPrefix>
     <AssemblyName>RafaelKallis.Extensions.Caching.Postgres</AssemblyName>
     <RootNamespace>RafaelKallis.Extensions.Caching.Postgres</RootNamespace>
   </PropertyGroup>
   
   <ItemGroup>
     <InternalsVisibleTo Include="Extensions.Caching.Postgres.Tests" />
-    <InternalsVisibleTo Include="Extensions.Caching.Postgres.Benchmark" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <InternalsVisibleTo Include="Extensions.Caching.Postgres.Benchmarks" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.TimeProvider" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0" />
     <PackageReference Include="Npgsql" Version="8.0.2" />
   </ItemGroup>
   

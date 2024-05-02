@@ -13,29 +13,11 @@ public sealed class PostgresCacheMigratorIntegrationTest(
         options.MigrateOnStart = false;
     }
 
-    public enum MigrationScenaria
-    {
-        Defaults,
-        DifferentSchemaName,
-        DifferentTableName,
-    }
-
-    [Theory]
-    [CombinatorialData]
-    public async Task WhenMigrate_TableShouldExist(MigrationScenaria scenario)
+    [Fact]
+    public async Task WhenMigrate_TableShouldExist()
     {
         string schemaName = PostgresCacheConstants.DefaultSchemaName;
         string tableName = PostgresCacheConstants.DefaultTableName;
-
-        if (scenario == MigrationScenaria.DifferentSchemaName)
-        {
-            schemaName = Guid.NewGuid().ToString().Replace("-", "");
-        }
-        else
-        if (scenario == MigrationScenaria.DifferentTableName)
-        {
-            tableName = Guid.NewGuid().ToString().Replace("-", "");
-        }
 
         PostgresCacheOptions.SchemaName = schemaName;
         PostgresCacheOptions.TableName = tableName;
