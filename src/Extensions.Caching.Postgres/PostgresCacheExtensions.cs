@@ -26,7 +26,6 @@ public static class PostgresCacheExtensions
 
         services.AddOptions<PostgresCacheOptions>()
             .Configure(configureOptions)
-            .ValidateDataAnnotations()
             .ValidateOnStart();
 
         services.AddSingleton<SqlQueries>();

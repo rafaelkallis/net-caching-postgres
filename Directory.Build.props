@@ -28,7 +28,7 @@
     <PackageProjectUrl>https://github.com/rafaelkallis/net-caching-postgres</PackageProjectUrl>
     <!--    <PackageIcon>postgresql.png</PackageIcon>-->
     <Description>Distributed caching implementation using Postgres.</Description>
-    <PackageTags>distributedcache;distributed;cache;caching;postgres</PackageTags>
+    <PackageTags>cache;distributedcache;postgres;postgresql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
