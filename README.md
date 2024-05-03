@@ -46,7 +46,7 @@ The following options are available:
 - `DefaultSlidingExpiration` (`20 minutes`): The default sliding expiration for cache entries.
 - `GarbageCollectionInterval` (`30 minutes`): The interval at which the garbage collection runs.
 
-## OpenTelemetry (preview)
+## OpenTelemetry
 
 ![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry.svg?label=stable)
 ![nuget-preview](https://img.shields.io/nuget/vpre/RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry.svg?label=preview)
@@ -67,7 +67,10 @@ The following code enables the OpenTelemetry instrumentation for the Postgres Ca
 
 ```csharp
 builder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder
+    .WithTracing(tracing => tracing
+        .AddDistributedPostgresCacheInstrumentation()
+        .AddConsoleExporter())
+    .WithMetrics(metrics => metrics
         .AddDistributedPostgresCacheInstrumentation()
         .AddConsoleExporter());
 ```

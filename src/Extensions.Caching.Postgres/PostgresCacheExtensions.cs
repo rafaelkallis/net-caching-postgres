@@ -1,6 +1,4 @@
-using System.Runtime.CompilerServices;
-
-using JetBrains.Annotations;
+using System.Diagnostics;
 
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +26,7 @@ public static class PostgresCacheExtensions
             .Configure(configureOptions)
             .ValidateOnStart();
 
+        services.AddSingleton<PostgresCacheMetrics>();
         services.AddSingleton<SqlQueries>();
         services.AddSingleton<ConnectionFactory>();
         services.AddSingleton<PostgresCache>();
@@ -39,23 +38,20 @@ public static class PostgresCacheExtensions
         return services;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static DateTime AsUnixTimeMillisecondsDateTime(this long unixTimeMilliseconds) =>
         DateTime.UnixEpoch.AddMilliseconds(unixTimeMilliseconds);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long ToUnixTimeMilliseconds(this DateTime dateTime) =>
         dateTime.Subtract(DateTime.UnixEpoch).ToMilliseconds();
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static TimeSpan AsMillisecondsTimeSpan(this long unixTimeMilliseconds) =>
         TimeSpan.FromMilliseconds(Convert.ToDouble(unixTimeMilliseconds));
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long ToMilliseconds(this TimeSpan timeSpan) =>
         Convert.ToInt64(timeSpan.TotalMilliseconds);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static NpgsqlParameter AddWithValue<T>(this NpgsqlParameterCollection parameters, NpgsqlDbType dbType, T? value) =>
         parameters.Add(new() { NpgsqlDbType = dbType, Value = value ?? DBNull.Value as object });
+
+    internal static Activity Succeed(this Activity activity) =>
+        activity.SetTag("otel.status_code", "OK");
 }

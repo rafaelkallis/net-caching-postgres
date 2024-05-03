@@ -31,12 +31,14 @@ internal static class PostgresCacheActivitySource
 
     private static Activity? StartActivity(string activityType, string? key = null, TimeSpan? absoluteExpirationRelativeToNow = null, TimeSpan? slidingExpiration = null)
     {
-        Activity? activity = ActivitySource.StartActivity($"PostgresCache {activityType}", ActivityKind.Client);
+        Activity? activity = ActivitySource.StartActivity($"PostgresCache {activityType}", ActivityKind.Internal);
 
         if (activity is not { IsAllDataRequested: true })
         {
             return null;
         }
+
+        activity.SetTag("otel.status_code", "ERROR");
 
         if (absoluteExpirationRelativeToNow != null)
         {
