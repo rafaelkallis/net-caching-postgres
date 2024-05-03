@@ -74,3 +74,15 @@ builder.Services.AddOpenTelemetry()
         .AddDistributedPostgresCacheInstrumentation()
         .AddConsoleExporter());
 ```
+
+### Available Metrics
+
+| Name | Description | Units | Instrument Type | Value Type | Attributes |
+|---|---|---|---|---|---|
+| `cache.operation.count` | The number of cache operations | {operation} | Counter | Int64 | `cache.operation.type` (`get`, `set`, `refresh`, `remove`); `cache.operation.key` |
+| `cache.operation.duration` | The duration of cache operations | ms | Histogram | Int64 | `cache.operation.type` (`get`, `set`, `refresh`, `remove`), `cache.operation.key` |
+| `cache.operation.io` | The amount of bytes read and written during cache operations | By | Histogram | Int64 | `cache.operation.type` (`get`, `set`, `refresh`, `remove`), `cache.operation.key` |
+| `cache.hit_ratio` | The hit ratio of cache | ObservableGauge | Double |
+| `cache.gc.count` | The number of garbage collections | {run} | Counter | Int64 |
+| `cache.gc.duration` | The duration of garbage collections | ms | Histogram | Int64 |
+| `cache.gc.removed_entries` | The number of entries that were removed during garbage collection, due to expiration | {entry} | Histogram | Int64

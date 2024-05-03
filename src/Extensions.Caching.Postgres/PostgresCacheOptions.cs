@@ -55,6 +55,11 @@ public class PostgresCacheOptions
     /// </summary>
     public TimeSpan GarbageCollectionInterval { get; set; } = TimeSpan.FromSeconds(PostgresCacheConstants.DefaultGarbageCollectionIntervalInSeconds);
 
+    /// <summary>
+    /// Whether or not the cache key is included in the telemetry data.
+    /// </summary>
+    public bool IncludeKeyInTelemetry { get; set; } = PostgresCacheConstants.DefaultIncludeKeyInTelemetry;
+
     internal bool EnableGarbageCollection { get; set; } = true;
     internal bool UncorrelateGarbageCollection { get; set; } = true;
 }

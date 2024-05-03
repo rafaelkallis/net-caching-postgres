@@ -32,7 +32,7 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
 #pragma warning restore CA5394 // Do not use insecure randomness
         }
         TimeSpan period = postgresCacheOptions.Value.GarbageCollectionInterval;
-        logger.LogDebug("Initializing garbage collection with {DueTime} {Period}", dueTime, period);
+        logger.LogDebug("Starting garbage collection timer: dueTime {DueTime}, period {Period}", dueTime, period);
         _timer = timeProvider.CreateTimer(GarbageCollectionTimerCallback, state: stoppingToken, dueTime, period);
         stoppingToken.Register(StopTimer);
         return Task.CompletedTask;
@@ -48,7 +48,6 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
             return;
         }
         using Activity activity = new(nameof(GarbageCollectionTimerCallback));
-        logger.LogDebug("Starting garbage collection");
         try
         {
             AsyncServiceScope asyncServiceScope = serviceProvider.CreateAsyncScope();
@@ -69,7 +68,7 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
 
     private void StopTimer()
     {
-        logger.LogDebug("Stopping garbage collection");
+        logger.LogDebug("Stopping garbage collection timer");
         _timer?.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
     }
 

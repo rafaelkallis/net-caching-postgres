@@ -1,3 +1,6 @@
+const RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.KeyAttribute = "cache.operation.key" -> string!
+const RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.MeterName = "Caching.Postgres" -> string!
+const RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.TypeAttribute = "cache.operation.type" -> string!
 RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory
 RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.ConnectionFactory(Microsoft.Extensions.Logging.ILogger<RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory!>! logger, Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! options) -> void
 RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.Dispose() -> void
@@ -18,7 +21,7 @@ RafaelKallis.Extensions.Caching.Postgres.PostgresCache.Set(string! key, byte[]! 
 RafaelKallis.Extensions.Caching.Postgres.PostgresCache.SetAsync(string! key, byte[]! value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions! options, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheExtensions
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics
-RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.PostgresCacheMetrics(System.Diagnostics.Metrics.IMeterFactory! meterFactory) -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.PostgresCacheMetrics(System.Diagnostics.Metrics.IMeterFactory! meterFactory, Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! options) -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.ConnectionString.get -> string?
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.ConnectionString.set -> void
@@ -26,6 +29,8 @@ RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.DefaultSlidingExpi
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.DefaultSlidingExpiration.set -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.GarbageCollectionInterval.get -> System.TimeSpan
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.GarbageCollectionInterval.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.IncludeKeyInTelemetry.get -> bool
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.IncludeKeyInTelemetry.set -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.KeyMaxLength.get -> int
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.KeyMaxLength.set -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.MigrateOnStart.get -> bool

@@ -10,4 +10,5 @@ internal class PostgresCacheConstants
     public const bool DefaultUseUnloggedTable = false;
     public const int DefaultSlidingExpirationInSeconds = 20 * 60; // 20 minutes
     public const int DefaultGarbageCollectionIntervalInSeconds = 30 * 60; // 30 minutes
+    public const bool DefaultIncludeKeyInTelemetry = true;
 }
