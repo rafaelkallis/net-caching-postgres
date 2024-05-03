@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -46,7 +47,8 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
             logger.LogDebug("Garbage collection is disabled");
             return;
         }
-        logger.LogInformation("Starting garbage collection");
+        using Activity activity = new(nameof(GarbageCollectionTimerCallback));
+        logger.LogDebug("Starting garbage collection");
         try
         {
             AsyncServiceScope asyncServiceScope = serviceProvider.CreateAsyncScope();

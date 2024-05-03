@@ -1,5 +1,4 @@
 using System.Data;
-using System.Data.Common;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -18,6 +17,7 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 /// </summary>
 public sealed partial class PostgresCache(
     ILogger<PostgresCache> logger,
+    PostgresCacheMetrics metrics,
     IOptions<PostgresCacheOptions> postgresCacheOptions,
     ConnectionFactory connectionFactory,
     SqlQueries sqlQueries,
@@ -42,14 +42,15 @@ public sealed partial class PostgresCache(
         if (!dataReader.Read())
         {
             LogCacheEntryNotFound(logger, key);
-            PostgresCacheEventSource.Log.CacheGet(key, stopwatch.Elapsed, false, 0);
+            metrics.Get(key, duration: stopwatch.Elapsed, hit: false, bytesRead: 0);
             return null;
         }
 
         byte[] value = dataReader.GetFieldValue<byte[]>("Value");
 
         LogCacheEntryFound(logger, key);
-        PostgresCacheEventSource.Log.CacheGet(key, stopwatch.Elapsed, true, value.Length);
+        metrics.Get(key, duration: stopwatch.Elapsed, hit: true, bytesRead: value.Length);
+        activity?.Succeed();
 
         return value;
     }
@@ -75,7 +76,7 @@ public sealed partial class PostgresCache(
         if (!await dataReader.ReadAsync(token).ConfigureAwait(false))
         {
             LogCacheEntryNotFound(logger, key);
-            PostgresCacheEventSource.Log.CacheGet(key, stopwatch.Elapsed, false, 0);
+            metrics.Get(key, duration: stopwatch.Elapsed, hit: false, bytesRead: 0);
             return null;
         }
 
@@ -83,7 +84,8 @@ public sealed partial class PostgresCache(
         byte[] value = await dataReader.GetFieldValueAsync<byte[]>(0, token).ConfigureAwait(false);
 
         LogCacheEntryFound(logger, key);
-        PostgresCacheEventSource.Log.CacheGet(key, stopwatch.Elapsed, true, value.Length);
+        metrics.Get(key, duration: stopwatch.Elapsed, hit: true, bytesRead: value.Length);
+        activity?.Succeed();
 
         return value;
     }
@@ -115,7 +117,8 @@ public sealed partial class PostgresCache(
         command.ExecuteNonQuery();
 
         LogCacheEntryAdded(logger, key);
-        PostgresCacheEventSource.Log.CacheSet(key, stopwatch.Elapsed, value.Length);
+        metrics.Set(key, duration: stopwatch.Elapsed, bytesWritten: value.Length);
+        activity?.Succeed();
     }
 
     /// <inheritdoc />
@@ -147,7 +150,8 @@ public sealed partial class PostgresCache(
         await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
 
         LogCacheEntryAdded(logger, key);
-        PostgresCacheEventSource.Log.CacheSet(key, stopwatch.Elapsed, value.Length);
+        metrics.Set(key, duration: stopwatch.Elapsed, bytesWritten: value.Length);
+        activity?.Succeed();
     }
 
     /// <inheritdoc />
@@ -164,7 +168,8 @@ public sealed partial class PostgresCache(
         command.ExecuteNonQuery();
 
         LogCacheEntryRefreshed(logger, key);
-        PostgresCacheEventSource.Log.CacheRefresh(key, stopwatch.Elapsed);
+        metrics.Refresh(key, duration: stopwatch.Elapsed);
+        activity?.Succeed();
     }
 
     /// <inheritdoc />
@@ -184,7 +189,8 @@ public sealed partial class PostgresCache(
         await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
 
         LogCacheEntryRefreshed(logger, key);
-        PostgresCacheEventSource.Log.CacheRefresh(key, stopwatch.Elapsed);
+        metrics.Refresh(key, duration: stopwatch.Elapsed);
+        activity?.Succeed();
     }
 
     /// <inheritdoc />
@@ -199,7 +205,8 @@ public sealed partial class PostgresCache(
         command.ExecuteNonQuery();
 
         LogCacheEntryRemoved(logger, key);
-        PostgresCacheEventSource.Log.CacheRemove(key, stopwatch.Elapsed);
+        metrics.Remove(key, duration: stopwatch.Elapsed);
+        activity?.Succeed();
     }
 
     /// <inheritdoc />
@@ -217,7 +224,8 @@ public sealed partial class PostgresCache(
         await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
 
         LogCacheEntryRemoved(logger, key);
-        PostgresCacheEventSource.Log.CacheRemove(key, stopwatch.Elapsed);
+        metrics.Remove(key, duration: stopwatch.Elapsed);
+        activity?.Succeed();
     }
 
     /// <summary>
@@ -243,7 +251,8 @@ public sealed partial class PostgresCache(
             await command.PrepareAsync(ct).ConfigureAwait(false);
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             LogDeletedExpiredCacheEntries(logger, rows);
-            PostgresCacheEventSource.Log.CacheGarbageCollection(stopwatch.Elapsed, rows);
+            metrics.GarbageCollection(duration: stopwatch.Elapsed, removedEntriesCount: rows);
+            activity?.Succeed();
             return;
         }
         catch (NpgsqlException e) when (e.SqlState?.StartsWith(SqlStateTransactionRollbackPrefix, StringComparison.Ordinal) ?? false)
@@ -266,7 +275,8 @@ public sealed partial class PostgresCache(
             await command.PrepareAsync(ct).ConfigureAwait(false);
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             LogDeletedExpiredCacheEntries(logger, rows);
-            PostgresCacheEventSource.Log.CacheGarbageCollection(stopwatch.Elapsed, rows);
+            metrics.GarbageCollection(duration: stopwatch.Elapsed, removedEntriesCount: rows);
+            activity?.Succeed();
             return;
         }
         catch (NpgsqlException e)
@@ -282,12 +292,14 @@ public sealed partial class PostgresCache(
             await command.PrepareAsync(ct).ConfigureAwait(false);
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             LogDeletedExpiredCacheEntries(logger, rows);
-            PostgresCacheEventSource.Log.CacheGarbageCollection(stopwatch.Elapsed, rows);
+            metrics.GarbageCollection(duration: stopwatch.Elapsed, removedEntriesCount: rows);
+            activity?.Succeed();
             return;
         }
         catch (NpgsqlException e)
         {
             logger.LogError(e, "Postgres error \"{SqlState}\" during garbage collection", e.SqlState);
+            throw;
         }
     }
 
@@ -307,6 +319,7 @@ public sealed partial class PostgresCache(
         await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         await transaction.CommitAsync(ct).ConfigureAwait(false);
         LogDatabaseMigrated(logger);
+        activity?.Succeed();
     }
 
     private static void ValidateOptions(DistributedCacheEntryOptions options, DateTimeOffset now)
@@ -390,7 +403,7 @@ public sealed partial class PostgresCache(
     [LoggerMessage(EventId = 6, Level = LogLevel.Debug, Message = "Deleting expired cache entries")]
     private static partial void LogDeletingExpiredCacheEntries(ILogger logger);
 
-    [LoggerMessage(EventId = 7, Level = LogLevel.Debug, Message = "Deleted {Count} expired cache entries")]
+    [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Deleted {Count} expired cache entries")]
     private static partial void LogDeletedExpiredCacheEntries(ILogger logger, int count);
 
     [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Database migrated")]
