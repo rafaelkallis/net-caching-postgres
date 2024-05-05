@@ -15,49 +15,39 @@ public sealed class PostgresCacheMetrics
     /// </summary>
     public const string MeterName = "Caching.Postgres";
 
-    /// <summary>
-    /// The telemetry attribute of the operation type.
-    /// </summary>
-    public const string TypeAttribute = "cache.operation.type";
-
-    /// <summary>
-    /// The telemetry attribute for the cache key.
-    /// </summary>
-    public const string KeyAttribute = "cache.operation.key";
+    internal const string TypeAttribute = "cache.operation.type";
+    internal const string KeyAttribute = "cache.operation.key";
 
     private readonly bool _includeKeyInTelemetry;
 
-    private readonly Counter<long> _operationCount;
-    private readonly Histogram<double> _operationDuration;
-    private readonly Histogram<long> _operationIO;
+    internal readonly Counter<long> OperationCount;
+    internal readonly Histogram<double> OperationDuration;
+    internal readonly Histogram<long> OperationIO;
 
     private long _gets;
     private long _getHits;
 
-    private readonly Counter<long> _gcCount;
-    private readonly Histogram<double> _gcDuration;
-    private readonly Histogram<long> _gcRemovedEntriesCount;
+    internal readonly Counter<long> GcCount;
+    internal readonly Histogram<double> GcDuration;
+    internal readonly Histogram<long> GcRemovedEntriesCount;
 
-    /// <inheritdoc cref="PostgresCacheMetrics" />
+    /// <inheritdoc />
     public PostgresCacheMetrics(IMeterFactory meterFactory, IOptions<PostgresCacheOptions> options)
     {
         ArgumentNullException.ThrowIfNull(options);
         _includeKeyInTelemetry = options.Value.IncludeKeyInTelemetry;
 
-        // https://learn.microsoft.com/en-us/dotnet/core/diagnostics/metrics-instrumentation#best-practices-1
-#pragma warning disable CA2000 // Dispose objects before losing scope
-        Meter meter = meterFactory.Create(MeterName);
-#pragma warning restore CA2000 // Dispose objects before losing scope
+        using Meter meter = meterFactory.Create(MeterName);
 
-        _operationCount = meter.CreateCounter<long>("cache.operation.count",
+        OperationCount = meter.CreateCounter<long>("cache.operation.count",
             unit: "{operation}",
             description: "The number of cache operations.");
 
-        _operationDuration = meter.CreateHistogram<double>("cache.operation.duration",
-            unit: "ms",
+        OperationDuration = meter.CreateHistogram<double>("cache.operation.duration",
+            unit: "s",
             description: "The duration of cache operations.");
 
-        _operationIO = meter.CreateHistogram<long>("cache.operation.io",
+        OperationIO = meter.CreateHistogram<long>("cache.operation.io",
             unit: "By",
             description: "The amount of bytes read and written during cache operations.");
 
@@ -65,15 +55,15 @@ public sealed class PostgresCacheMetrics
             description: "The hit ratio of the cache.",
             observeValue: () => Convert.ToDouble(Interlocked.Read(ref _getHits)) / Convert.ToDouble(Interlocked.Read(ref _gets)));
 
-        _gcCount = meter.CreateCounter<long>("cache.gc.count",
+        GcCount = meter.CreateCounter<long>("cache.gc.count",
             unit: "{run}",
             description: "The number of garbage collections.");
 
-        _gcDuration = meter.CreateHistogram<double>("cache.gc.duration",
-            unit: "ms",
+        GcDuration = meter.CreateHistogram<double>("cache.gc.duration",
+            unit: "s",
             description: "The duration of garbage collections.");
 
-        _gcRemovedEntriesCount = meter.CreateHistogram<long>("cache.gc.removed_entries",
+        GcRemovedEntriesCount = meter.CreateHistogram<long>("cache.gc.removed_entries",
             unit: "{entry}",
             description: "The number of entries that were removed during garbage collection, because they expired.");
     }
@@ -90,9 +80,9 @@ public sealed class PostgresCacheMetrics
             {TypeAttribute, "get"},
         };
         AddKey(tags, key);
-        _operationCount.Add(1, tags);
-        _operationDuration.Record(duration.TotalMilliseconds, tags);
-        _operationIO.Record(bytesRead, tags);
+        OperationCount.Add(1, tags);
+        OperationDuration.Record(duration.TotalSeconds, tags);
+        OperationIO.Record(bytesRead, tags);
     }
 
     internal void Set(string key, TimeSpan duration, long bytesWritten)
@@ -102,9 +92,9 @@ public sealed class PostgresCacheMetrics
             {TypeAttribute, "set"},
         };
         AddKey(tags, key);
-        _operationCount.Add(1, tags);
-        _operationDuration.Record(duration.TotalMilliseconds, tags);
-        _operationIO.Record(bytesWritten, tags);
+        OperationCount.Add(1, tags);
+        OperationDuration.Record(duration.TotalSeconds, tags);
+        OperationIO.Record(bytesWritten, tags);
     }
 
     internal void Refresh(string key, TimeSpan duration)
@@ -114,8 +104,8 @@ public sealed class PostgresCacheMetrics
             {TypeAttribute, "refresh"},
         };
         AddKey(tags, key);
-        _operationCount.Add(1, tags);
-        _operationDuration.Record(duration.TotalMilliseconds, tags);
+        OperationCount.Add(1, tags);
+        OperationDuration.Record(duration.TotalSeconds, tags);
     }
 
     internal void Remove(string key, TimeSpan duration)
@@ -125,15 +115,15 @@ public sealed class PostgresCacheMetrics
             {TypeAttribute, "remove"},
         };
         AddKey(tags, key);
-        _operationCount.Add(1, tags);
-        _operationDuration.Record(duration.TotalMilliseconds, tags);
+        OperationCount.Add(1, tags);
+        OperationDuration.Record(duration.TotalSeconds, tags);
     }
 
     internal void GarbageCollection(TimeSpan duration, long removedEntriesCount)
     {
-        _gcCount.Add(1);
-        _gcDuration.Record(duration.TotalMilliseconds);
-        _gcRemovedEntriesCount.Record(removedEntriesCount);
+        GcCount.Add(1);
+        GcDuration.Record(duration.TotalSeconds);
+        GcRemovedEntriesCount.Record(removedEntriesCount);
     }
 
     private void AddKey(TagList tags, string key)

@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres.OpenTelemetry", "src\Extensions.Caching.Postgres.OpenTelemetry\Extensions.Caching.Postgres.OpenTelemetry.csproj", "{6F9445C0-B619-4818-BAA1-E87AB4B4A639}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres.HealthChecks", "src\Extensions.Caching.Postgres.HealthChecks\Extensions.Caching.Postgres.HealthChecks.csproj", "{161D900A-A84E-43CD-92F7-D3E3BFAFFC0F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.Postgres.HealthChecks.Tests", "test\Extensions.Caching.Postgres.HealthChecks.Tests\Extensions.Caching.Postgres.HealthChecks.Tests.csproj", "{1D92E537-96FC-4209-A80F-B530A01C026D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{6F9445C0-B619-4818-BAA1-E87AB4B4A639}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F9445C0-B619-4818-BAA1-E87AB4B4A639}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F9445C0-B619-4818-BAA1-E87AB4B4A639}.Release|Any CPU.Build.0 = Release|Any CPU
+		{161D900A-A84E-43CD-92F7-D3E3BFAFFC0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{161D900A-A84E-43CD-92F7-D3E3BFAFFC0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{161D900A-A84E-43CD-92F7-D3E3BFAFFC0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{161D900A-A84E-43CD-92F7-D3E3BFAFFC0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D92E537-96FC-4209-A80F-B530A01C026D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D92E537-96FC-4209-A80F-B530A01C026D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D92E537-96FC-4209-A80F-B530A01C026D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D92E537-96FC-4209-A80F-B530A01C026D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -48,5 +60,7 @@ Global
 		{6C4FAB0A-3437-42FD-949C-49580E025021} = {47B6D147-AF64-45FD-85FA-316EE2308C95}
 		{2B98F9B3-F9DF-40AC-814A-5AA12F8911A7} = {7324F702-3BDD-46CE-BA65-CC8EF4E6D4C2}
 		{6F9445C0-B619-4818-BAA1-E87AB4B4A639} = {47B6D147-AF64-45FD-85FA-316EE2308C95}
+		{161D900A-A84E-43CD-92F7-D3E3BFAFFC0F} = {47B6D147-AF64-45FD-85FA-316EE2308C95}
+		{1D92E537-96FC-4209-A80F-B530A01C026D} = {709C55A8-D827-494F-90A0-63F4DF4252DC}
 	EndGlobalSection
 EndGlobal

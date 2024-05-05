@@ -80,9 +80,37 @@ builder.Services.AddOpenTelemetry()
 | Name | Description | Units | Instrument Type | Value Type | Attributes |
 |---|---|---|---|---|---|
 | `cache.operation.count` | The number of cache operations | {operation} | Counter | Int64 | `cache.operation.type` (`get`, `set`, `refresh`, `remove`); `cache.operation.key` |
-| `cache.operation.duration` | The duration of cache operations | ms | Histogram | Int64 | `cache.operation.type` (`get`, `set`, `refresh`, `remove`), `cache.operation.key` |
+| `cache.operation.duration` | The duration of cache operations | s | Histogram | Int64 | `cache.operation.type` (`get`, `set`, `refresh`, `remove`), `cache.operation.key` |
 | `cache.operation.io` | The amount of bytes read and written during cache operations | By | Histogram | Int64 | `cache.operation.type` (`get`, `set`, `refresh`, `remove`), `cache.operation.key` |
-| `cache.hit_ratio` | The hit ratio of cache | ObservableGauge | Double |
+| `cache.hit_ratio` | The hit ratio of the cache | ObservableGauge | Double |
 | `cache.gc.count` | The number of garbage collections | {run} | Counter | Int64 |
-| `cache.gc.duration` | The duration of garbage collections | ms | Histogram | Int64 |
+| `cache.gc.duration` | The duration of garbage collections | s | Histogram | Int64 |
 | `cache.gc.removed_entries` | The number of entries that were removed during garbage collection, due to expiration | {entry} | Histogram | Int64
+
+## Health Checks
+
+![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.HealthChecks.svg?label=stable)
+![nuget-preview](https://img.shields.io/nuget/vpre/RafaelKallis.Extensions.Caching.Postgres.HealthChecks.svg?label=preview)
+
+[Health checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) are typically used with an external monitoring service or container orchestrator to check the status of an app. Before adding health checks to an app, decide on which monitoring system to use. The monitoring system dictates what types of health checks to create and how to configure their endpoints.
+
+### Step 1: Install Package
+
+Add a reference to the [RafaelKallis.Extensions.Caching.Postgres.HealthChecks](https://www.nuget.org/packages/RafaelKallis.Extensions.Caching.Postgres.HealthChecks) package.
+
+```sh
+dotnet add package RafaelKallis.Extensions.Caching.Postgres.HealthChecks
+```
+
+### Step 2: Enable Health Checks
+
+The following code enables the health checks for the Postgres Cache in your application:
+
+```csharp
+builder.Services.AddHealthChecks()
+    .AddDistributedPostgresCacheHealthCheck(options => 
+    {
+        options.DegradedTimeout = TimeSpan.FromMilliseconds(500);
+        options.UnhealthyTimeout = TimeSpan.FromSeconds(30);
+    });
+```

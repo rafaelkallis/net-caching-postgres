@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>RafaelKallis.Extensions.Caching.Postgres.HealthChecks.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Extensions.Caching.Postgres.HealthChecks\Extensions.Caching.Postgres.HealthChecks.csproj" />
+    <ProjectReference Include="..\Extensions.Caching.Postgres.Tests\Extensions.Caching.Postgres.Tests.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="RafaelKallis.Extensions.Caching.Postgres.HealthChecks" />
+  </ItemGroup>
+  
+</Project>

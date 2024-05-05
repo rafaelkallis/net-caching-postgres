@@ -1,0 +1,11 @@
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.HealthChecksBuilderExtensions
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheck
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheck.PostgresCacheHealthCheck(Microsoft.Extensions.Logging.ILogger<RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheck!>! logger, Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheckOptions!>! options, Microsoft.Extensions.Caching.Distributed.IDistributedCache! cache, System.TimeProvider! timeProvider) -> void
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheckOptions
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheckOptions.DegradedTimeout.get -> System.TimeSpan
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheckOptions.DegradedTimeout.set -> void
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheckOptions.PostgresCacheHealthCheckOptions() -> void
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheckOptions.UnhealthyTimeout.get -> System.TimeSpan
+RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheckOptions.UnhealthyTimeout.set -> void
+static RafaelKallis.Extensions.Caching.Postgres.HealthChecks.HealthChecksBuilderExtensions.AddDistributedPostgresCacheHealthCheck(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, System.Action<RafaelKallis.Extensions.Caching.Postgres.HealthChecks.PostgresCacheHealthCheckOptions!>? configureOptions = null, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus = null, System.Collections.Generic.IEnumerable<string!>? tags = null, System.TimeSpan? timeout = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!

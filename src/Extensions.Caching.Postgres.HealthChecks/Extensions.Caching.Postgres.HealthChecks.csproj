@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <VersionPrefix>8.0.0</VersionPrefix>
+    <AssemblyName>RafaelKallis.Extensions.Caching.Postgres.HealthChecks</AssemblyName>
+    <RootNamespace>RafaelKallis.Extensions.Caching.Postgres.HealthChecks</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.4" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

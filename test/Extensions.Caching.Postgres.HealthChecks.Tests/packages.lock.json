@@ -23,36 +23,6 @@
         "resolved": "0.31.0",
         "contentHash": "KWyAnqT5gCx1vHr/oNhyEV8HV1aCJswREoxEbZcWOWBGTWm7aAeMnzwjfAPNNYumzhT8Y8IafgcLur0OXrLZrA=="
       },
-      "Microsoft.AspNetCore.Mvc.Testing": {
-        "type": "Direct",
-        "requested": "[8.0.4, )",
-        "resolved": "8.0.4",
-        "contentHash": "e6IVsUq7zmAO/T4GGd00j1yxh6PBHF1PlQLaiFV/nM1jePH7Rbu+zVoXCRUDC2KOlHnPCym+eqFFlZkNNO2CvQ==",
-        "dependencies": {
-          "Microsoft.AspNetCore.TestHost": "8.0.4",
-          "Microsoft.Extensions.DependencyModel": "8.0.0",
-          "Microsoft.Extensions.Hosting": "8.0.0"
-        }
-      },
-      "Microsoft.Extensions.Diagnostics.Testing": {
-        "type": "Direct",
-        "requested": "[8.4.0, )",
-        "resolved": "8.4.0",
-        "contentHash": "Luu8ESyOI2mMfMcHaod1wd/HOPyL61I0//X5eiaJtyX/tpdL2/+zOewtdjcySXObRoIFSCY68//Qw1rFqoZVOQ==",
-        "dependencies": {
-          "Microsoft.Extensions.Configuration.Binder": "8.0.1",
-          "Microsoft.Extensions.Logging": "8.0.0",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "8.0.0",
-          "Microsoft.Extensions.Telemetry.Abstractions": "8.4.0",
-          "System.Diagnostics.DiagnosticSource": "8.0.1"
-        }
-      },
-      "Microsoft.Extensions.TimeProvider.Testing": {
-        "type": "Direct",
-        "requested": "[8.4.0, )",
-        "resolved": "8.4.0",
-        "contentHash": "xaXPM4dQe4oJ2gY82al9LtjLHcfXaD+N/lXw4qX02sd3mETQpV2h1jeJyRYxBJcbJHIvE0pR1gj5yz3/dbnMFw=="
-      },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[17.9.0, )",
@@ -98,15 +68,6 @@
           "xunit.core": "[2.7.1]"
         }
       },
-      "Xunit.Combinatorial": {
-        "type": "Direct",
-        "requested": "[1.6.24, )",
-        "resolved": "1.6.24",
-        "contentHash": "iqoQxBOE78VFwD9hYcxiAsJML4lAsbPNQ4lFLsyXNmr5/0W2RTM8sojUFU7rGrbUWY6VaA1E6NROI4e4lLmfIw==",
-        "dependencies": {
-          "xunit.extensibility.core": "2.2.0"
-        }
-      },
       "xunit.runner.visualstudio": {
         "type": "Direct",
         "requested": "[2.5.8, )",
@@ -125,6 +86,16 @@
         "type": "Transitive",
         "resolved": "2023.3.0",
         "contentHash": "PHfnvdBUdGaTVG9bR/GEfxgTwWM0Z97Y6X3710wiljELBISipSfF5okn/vz+C2gfO+ihoEyVPjaJwn8ZalVukA=="
+      },
+      "Microsoft.AspNetCore.Mvc.Testing": {
+        "type": "Transitive",
+        "resolved": "8.0.4",
+        "contentHash": "e6IVsUq7zmAO/T4GGd00j1yxh6PBHF1PlQLaiFV/nM1jePH7Rbu+zVoXCRUDC2KOlHnPCym+eqFFlZkNNO2CvQ==",
+        "dependencies": {
+          "Microsoft.AspNetCore.TestHost": "8.0.4",
+          "Microsoft.Extensions.DependencyModel": "8.0.0",
+          "Microsoft.Extensions.Hosting": "8.0.0"
+        }
       },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Transitive",
@@ -284,6 +255,34 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
           "Microsoft.Extensions.Options": "8.0.0",
           "System.Diagnostics.DiagnosticSource": "8.0.0"
+        }
+      },
+      "Microsoft.Extensions.Diagnostics.HealthChecks": {
+        "type": "Transitive",
+        "resolved": "8.0.4",
+        "contentHash": "QOMZwmA5cCJA29pWQ8gSgwSW1RBKh1x0IKyUYJFy4o644pFmXKhpdnZhilERjp/V8k7+Cu9Aqg72wYk/U4vAiQ==",
+        "dependencies": {
+          "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "8.0.4",
+          "Microsoft.Extensions.Hosting.Abstractions": "8.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.1",
+          "Microsoft.Extensions.Options": "8.0.2"
+        }
+      },
+      "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": {
+        "type": "Transitive",
+        "resolved": "8.0.4",
+        "contentHash": "/VINyqL+Hth2P+u5Qyrmar+w/RtNL/LBUhqG4vST2oDSout8N85j8FQdMKR2R/MJJiEBbg9H6NwWBWEYCCE+gw=="
+      },
+      "Microsoft.Extensions.Diagnostics.Testing": {
+        "type": "Transitive",
+        "resolved": "8.4.0",
+        "contentHash": "Luu8ESyOI2mMfMcHaod1wd/HOPyL61I0//X5eiaJtyX/tpdL2/+zOewtdjcySXObRoIFSCY68//Qw1rFqoZVOQ==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.Binder": "8.0.1",
+          "Microsoft.Extensions.Logging": "8.0.0",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "8.0.0",
+          "Microsoft.Extensions.Telemetry.Abstractions": "8.4.0",
+          "System.Diagnostics.DiagnosticSource": "8.0.1"
         }
       },
       "Microsoft.Extensions.FileProviders.Abstractions": {
@@ -473,6 +472,11 @@
           "Microsoft.Extensions.Options": "8.0.2"
         }
       },
+      "Microsoft.Extensions.TimeProvider.Testing": {
+        "type": "Transitive",
+        "resolved": "8.4.0",
+        "contentHash": "xaXPM4dQe4oJ2gY82al9LtjLHcfXaD+N/lXw4qX02sd3mETQpV2h1jeJyRYxBJcbJHIvE0pR1gj5yz3/dbnMFw=="
+      },
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
         "resolved": "17.9.0",
@@ -564,6 +568,14 @@
         "resolved": "2.7.1",
         "contentHash": "JqvXS4yX+PtJn5BuqoKkYav7I0g4nXcxRbGTomDwVQjFccOdyfYKpuPOHX/DqrPCcL+MIHrGVdP3bveUXlvdnA=="
       },
+      "Xunit.Combinatorial": {
+        "type": "Transitive",
+        "resolved": "1.6.24",
+        "contentHash": "iqoQxBOE78VFwD9hYcxiAsJML4lAsbPNQ4lFLsyXNmr5/0W2RTM8sojUFU7rGrbUWY6VaA1E6NROI4e4lLmfIw==",
+        "dependencies": {
+          "xunit.extensibility.core": "2.2.0"
+        }
+      },
       "xunit.core": {
         "type": "Transitive",
         "resolved": "2.7.1",
@@ -589,6 +601,21 @@
           "xunit.extensibility.core": "[2.7.1]"
         }
       },
+      "extensions.caching.postgres.tests": {
+        "type": "Project",
+        "dependencies": {
+          "FluentAssertions": "[6.12.0, )",
+          "Microsoft.AspNetCore.Mvc.Testing": "[8.0.4, )",
+          "Microsoft.Extensions.Diagnostics.Testing": "[8.4.0, )",
+          "Microsoft.Extensions.TimeProvider.Testing": "[8.4.0, )",
+          "Microsoft.NET.Test.Sdk": "[17.9.0, )",
+          "NSubstitute": "[5.1.0, )",
+          "RafaelKallis.Extensions.Caching.Postgres": "[8.0.11, )",
+          "System.Linq.Async": "[6.0.1, )",
+          "Xunit.Combinatorial": "[1.6.24, )",
+          "xunit": "[2.7.1, )"
+        }
+      },
       "RafaelKallis.Extensions.Caching.Postgres": {
         "type": "Project",
         "dependencies": {
@@ -598,6 +625,14 @@
           "Microsoft.Extensions.Hosting": "[8.0.0, )",
           "Microsoft.Extensions.Options": "[8.0.0, )",
           "Npgsql": "[8.0.2, )"
+        }
+      },
+      "RafaelKallis.Extensions.Caching.Postgres.HealthChecks": {
+        "type": "Project",
+        "dependencies": {
+          "JetBrains.Annotations": "[2023.3.0, )",
+          "Microsoft.Extensions.Caching.Abstractions": "[8.0.0, )",
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "[8.0.4, )"
         }
       }
     }

@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Meziantou.Extensions.Logging.Xunit" Version="1.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" Version="8.4.0" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="8.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.4" />
     <PackageReference Include="Xunit.Combinatorial" Version="1.6.24" />

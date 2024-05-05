@@ -1,29 +1,30 @@
+using Microsoft.AspNetCore.Mvc.TagHelpers.Cache;
+
 using Npgsql;
 
 using NpgsqlTypes;
 
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
-[CollectionDefinition(PostgresFixture.CollectionName)]
-public class PostgresCollectionFixture : ICollectionFixture<PostgresFixture>;
-
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    public const string CollectionName = "Postgres";
-
     private const string DefaultHost = "127.0.0.1";
     private const string DefaultDatabase = "postgres";
     private const string DefaultUsername = "postgres";
     private const string DefaultPassword = "pAssw0rd";
 
-    public string ConnectionString { get; }
-    private readonly string _database;
+    private readonly string _adminConnectionString;
+    private readonly string _testDatabase;
+    private readonly string _testConnectionString;
     private readonly NpgsqlDataSource _dataSource;
+
+    public string ConnectionString => _testConnectionString;
 
     public PostgresFixture()
     {
-        _database = $"test_{DateTime.UtcNow:o}";
-        ConnectionString = CreateConnectionString(database: _database);
+        _adminConnectionString = CreateConnectionString();
+        _testDatabase = $"test_{DateTimeOffset.UtcNow:o}_{Guid.NewGuid():N}";
+        _testConnectionString = CreateConnectionString(database: _testDatabase);
         _dataSource = NpgsqlDataSource.Create(ConnectionString);
     }
 
@@ -49,6 +50,14 @@ public sealed class PostgresFixture : IAsyncLifetime
         command.Parameters.AddWithValue<long?>(NpgsqlDbType.Bigint, cacheEntry.SlidingExpiration?.ToMilliseconds());
         command.Parameters.AddWithValue<long?>(NpgsqlDbType.Bigint, cacheEntry.AbsoluteExpiration?.ToUnixTimeMilliseconds());
         await command.PrepareAsync();
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task Truncate(string schema = PostgresCacheConstants.DefaultSchemaName, string table = PostgresCacheConstants.DefaultTableName)
+    {
+        string sql = $@"TRUNCATE TABLE ""{schema}"".""{table}""";
+        await using NpgsqlConnection connection = await OpenConnection();
+        await using NpgsqlCommand command = new(sql, connection);
         await command.ExecuteNonQueryAsync();
     }
 
@@ -80,11 +89,37 @@ public sealed class PostgresFixture : IAsyncLifetime
                 : null);
     }
 
+    public async IAsyncEnumerable<CacheEntry> SelectByKeyPattern(string keyPattern, string schema = PostgresCacheConstants.DefaultSchemaName, string table = PostgresCacheConstants.DefaultTableName)
+    {
+        string sql = $@"
+            SELECT ""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration""
+            FROM ""{schema}"".""{table}""
+            WHERE ""Key"" LIKE $1;";
+        await using NpgsqlConnection connection = await OpenConnection();
+        await using NpgsqlCommand command = new(sql, connection);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, keyPattern);
+        await command.PrepareAsync();
+        await using NpgsqlDataReader dataReader = await command.ExecuteReaderAsync();
+        while (await dataReader.ReadAsync())
+        {
+            yield return new CacheEntry(
+                Key: dataReader.GetString(0),
+                Value: await dataReader.GetFieldValueAsync<byte[]>(1),
+                ExpiresAt: dataReader.GetInt64(2).AsUnixTimeMillisecondsDateTime(),
+                SlidingExpiration: !await dataReader.IsDBNullAsync(3)
+                    ? dataReader.GetInt64(3).AsMillisecondsTimeSpan()
+                    : null,
+                AbsoluteExpiration: !await dataReader.IsDBNullAsync(4)
+                    ? dataReader.GetInt64(4).AsUnixTimeMillisecondsDateTime()
+                    : null);
+        }
+    }
+
     public async Task InitializeAsync()
     {
-        await using NpgsqlConnection connection = new(CreateConnectionString());
+        await using NpgsqlConnection connection = new(_adminConnectionString);
         await connection.OpenAsync();
-        string sql = $@"CREATE DATABASE ""{_database}"";";
+        string sql = $@"CREATE DATABASE ""{_testDatabase}"";";
         await using NpgsqlCommand command = new(sql, connection);
         await command.ExecuteNonQueryAsync();
     }
@@ -92,8 +127,8 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await _dataSource.DisposeAsync();
-        string sql = $@"DROP DATABASE ""{_database}"" (FORCE);";
-        await using NpgsqlConnection connection = new(CreateConnectionString());
+        string sql = $@"DROP DATABASE ""{_testDatabase}"" (FORCE);";
+        await using NpgsqlConnection connection = new(_adminConnectionString);
         await connection.OpenAsync();
         await using NpgsqlCommand command = new(sql, connection);
         await command.ExecuteNonQueryAsync();

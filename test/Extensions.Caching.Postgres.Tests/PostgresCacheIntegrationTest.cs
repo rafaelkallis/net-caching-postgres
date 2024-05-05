@@ -1,21 +1,53 @@
+using System.Security.Cryptography;
+
+using Microsoft.Extensions.Diagnostics.Metrics.Testing;
+
 using Xunit.Sdk;
 
 using DistributedCacheEntryOptions = Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions;
 
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 
-[Collection(PostgresFixture.CollectionName)]
-public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : IntegrationTest(output, postgresFixture)
+public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : IntegrationTest(output, postgresFixture), IDisposable
 {
     private const int ValueSize = 1024;
+
+    private MetricCollector<long> _operationCountCollector = null!;
+    private MetricCollector<double> _operationDurationCollector = null!;
+    private MetricCollector<long> _operationIOCollector = null!;
+    private MetricCollector<long> _gcCountCollector = null!;
+    private MetricCollector<double> _gcDurationCollector = null!;
+    private MetricCollector<long> _gcRemovedEntriesCountCollector = null!;
+
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+
+        PostgresCacheMetrics metrics = _webApplication.Services.GetRequiredService<PostgresCacheMetrics>();
+        _operationCountCollector = new(metrics.OperationCount, FakeTimeProvider);
+        _operationDurationCollector = new(metrics.OperationDuration, FakeTimeProvider);
+        _operationIOCollector = new(metrics.OperationIO, FakeTimeProvider);
+        _gcCountCollector = new(metrics.GcCount, FakeTimeProvider);
+        _gcDurationCollector = new(metrics.GcDuration, FakeTimeProvider);
+        _gcRemovedEntriesCountCollector = new(metrics.GcRemovedEntriesCount, FakeTimeProvider);
+    }
+
+    public void Dispose()
+    {
+        _operationCountCollector.Dispose();
+        _operationDurationCollector.Dispose();
+        _operationIOCollector.Dispose();
+        _gcCountCollector.Dispose();
+        _gcDurationCollector.Dispose();
+        _gcRemovedEntriesCountCollector.Dispose();
+    }
 
     [Theory]
     [CombinatorialData]
     public async Task Get_WhenItemExists_ShouldGet(bool async)
     {
         string key = Guid.NewGuid().ToString();
-        byte[] value = new byte[ValueSize];
-        Random.Shared.NextBytes(value);
+        byte[] value = RandomNumberGenerator.GetBytes(ValueSize);
         CacheEntry cacheEntry = new(key,
             value,
             ExpiresAt: FakeTimeProvider.GetUtcNow().AddMinutes(1),
@@ -41,6 +73,10 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         cacheEntry2?.ExpiresAt.Should().BeCloseTo(FakeTimeProvider.GetUtcNow().AddMinutes(5), TimeSpan.FromSeconds(1));
         cacheEntry2?.SlidingExpiration.Should().Be(cacheEntry.SlidingExpiration);
         cacheEntry2?.AbsoluteExpiration.Should().BeNull();
+
+        _operationCountCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationDurationCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationIOCollector.GetMeasurementSnapshot().Should().HaveCount(1);
     }
 
     [Theory]
@@ -60,33 +96,10 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         }
 
         resultValue.Should().BeNull();
-    }
 
-    [Theory]
-    [CombinatorialData]
-    public async Task Remove_WhenItemExists_ShouldRemoveItem(bool async)
-    {
-        string key = Guid.NewGuid().ToString();
-        byte[] value = new byte[ValueSize];
-        Random.Shared.NextBytes(value);
-        CacheEntry cacheEntry = new(key,
-            value,
-            ExpiresAt: DateTimeOffset.UtcNow.AddMinutes(1),
-            SlidingExpiration: null,
-            AbsoluteExpiration: null);
-        await PostgresFixture.Insert(cacheEntry);
-
-        if (async)
-        {
-            await PostgresCache.RemoveAsync(key, default);
-        }
-        else
-        {
-            PostgresCache.Remove(key);
-        }
-
-        CacheEntry? cacheItem2 = await PostgresFixture.SelectByKey(key);
-        cacheItem2.Should().BeNull();
+        _operationCountCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationDurationCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationIOCollector.GetMeasurementSnapshot().Should().HaveCount(1);
     }
 
     public enum ExpirationScenarios
@@ -103,8 +116,7 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
     public async Task Set_WhenItemDoesNotExist_ShouldAddItem(bool async, ExpirationScenarios scenario)
     {
         string key = Guid.NewGuid().ToString();
-        byte[] value = new byte[ValueSize];
-        Random.Shared.NextBytes(value);
+        byte[] value = RandomNumberGenerator.GetBytes(ValueSize);
 
         TimeSpan sliding = TimeSpan.FromMinutes(1);
         TimeSpan absolute = TimeSpan.FromMinutes(5);
@@ -172,6 +184,10 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         {
             throw FailException.ForFailure($"Unknown scenario {scenario}");
         }
+
+        _operationCountCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationDurationCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationIOCollector.GetMeasurementSnapshot().Should().HaveCount(1);
     }
 
     [Theory]
@@ -179,8 +195,7 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
     public async Task Refresh_ShouldUpdateExpiredAt(bool async)
     {
         string key = Guid.NewGuid().ToString();
-        byte[] value = new byte[1024];
-        Random.Shared.NextBytes(value);
+        byte[] value = RandomNumberGenerator.GetBytes(ValueSize);
         CacheEntry cacheEntry = new(key,
             value,
             ExpiresAt: FakeTimeProvider.GetUtcNow().AddMinutes(1),
@@ -202,6 +217,40 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         cacheEntry2?.ExpiresAt.Should().BeCloseTo(FakeTimeProvider.GetUtcNow() + TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(1));
         cacheEntry2?.SlidingExpiration.Should().Be(cacheEntry.SlidingExpiration);
         cacheEntry2?.AbsoluteExpiration.Should().BeNull();
+
+        _operationCountCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationDurationCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationIOCollector.GetMeasurementSnapshot().Should().HaveCount(0);
+    }
+
+    [Theory]
+    [CombinatorialData]
+    public async Task Remove_WhenItemExists_ShouldRemoveItem(bool async)
+    {
+        string key = Guid.NewGuid().ToString();
+        byte[] value = RandomNumberGenerator.GetBytes(ValueSize);
+        CacheEntry cacheEntry = new(key,
+            value,
+            ExpiresAt: DateTimeOffset.UtcNow.AddMinutes(1),
+            SlidingExpiration: null,
+            AbsoluteExpiration: null);
+        await PostgresFixture.Insert(cacheEntry);
+
+        if (async)
+        {
+            await PostgresCache.RemoveAsync(key, default);
+        }
+        else
+        {
+            PostgresCache.Remove(key);
+        }
+
+        CacheEntry? cacheItem2 = await PostgresFixture.SelectByKey(key);
+        cacheItem2.Should().BeNull();
+
+        _operationCountCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationDurationCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _operationIOCollector.GetMeasurementSnapshot().Should().HaveCount(0);
     }
 
     [Fact]
@@ -209,8 +258,7 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
     {
 
         string key1 = Guid.NewGuid().ToString();
-        byte[] value1 = new byte[1024];
-        Random.Shared.NextBytes(value1);
+        byte[] value1 = RandomNumberGenerator.GetBytes(ValueSize);
         CacheEntry? cacheEntry1 = new(key1,
             value1,
             ExpiresAt: FakeTimeProvider.GetUtcNow().AddMinutes(1),
@@ -219,10 +267,9 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         await PostgresFixture.Insert(cacheEntry1);
 
         string key2 = Guid.NewGuid().ToString();
-        byte[] value2 = new byte[1024];
-        Random.Shared.NextBytes(value2);
+        byte[] value2 = RandomNumberGenerator.GetBytes(ValueSize);
         CacheEntry? cacheEntry2 = new(key2,
-            value1,
+            value2,
             ExpiresAt: FakeTimeProvider.GetUtcNow().AddMinutes(2),
             SlidingExpiration: null,
             AbsoluteExpiration: null);
@@ -234,6 +281,11 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         cacheEntry1.Should().NotBeNull("it dit not expire");
         cacheEntry2 = await PostgresFixture.SelectByKey(key2);
         cacheEntry2.Should().NotBeNull("it did not expire");
+
+        _gcCountCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _gcDurationCollector.GetMeasurementSnapshot().Should().HaveCount(1);
+        _gcRemovedEntriesCountCollector.GetMeasurementSnapshot().Should().HaveCount(1)
+            .And.Subject.Last().Value.Should().Be(0);
 
         FakeTimeProvider.Advance(TimeSpan.FromMinutes(1));
 
@@ -249,6 +301,11 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         cacheEntry2 = await PostgresFixture.SelectByKey(key2);
         cacheEntry2.Should().NotBeNull("it did not expire");
 
+        _gcCountCollector.GetMeasurementSnapshot().Should().HaveCount(2);
+        _gcDurationCollector.GetMeasurementSnapshot().Should().HaveCount(2);
+        _gcRemovedEntriesCountCollector.GetMeasurementSnapshot().Should().HaveCount(2)
+            .And.Subject.Last().Value.Should().Be(1, "garbage collection removed one entry");
+
         FakeTimeProvider.Advance(TimeSpan.FromMinutes(1));
 
         cacheEntry2 = await PostgresFixture.SelectByKey(key2);
@@ -258,5 +315,10 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
 
         cacheEntry2 = await PostgresFixture.SelectByKey(key2);
         cacheEntry2.Should().BeNull("garbage collection removed it");
+
+        _gcCountCollector.GetMeasurementSnapshot().Should().HaveCount(3);
+        _gcDurationCollector.GetMeasurementSnapshot().Should().HaveCount(3);
+        _gcRemovedEntriesCountCollector.GetMeasurementSnapshot().Should().HaveCount(3)
+            .And.Subject.Last().Value.Should().Be(1, "garbage collection removed one entry");
     }
 }

@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using Npgsql;
 
@@ -25,6 +26,8 @@ public static class PostgresCacheExtensions
         services.AddOptions<PostgresCacheOptions>()
             .Configure(configureOptions)
             .ValidateOnStart();
+
+        services.TryAddSingleton(TimeProvider.System);
 
         services.AddSingleton<PostgresCacheMetrics>();
         services.AddSingleton<SqlQueries>();

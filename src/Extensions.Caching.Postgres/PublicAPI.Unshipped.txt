@@ -1,6 +1,4 @@
-const RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.KeyAttribute = "cache.operation.key" -> string!
 const RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.MeterName = "Caching.Postgres" -> string!
-const RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.TypeAttribute = "cache.operation.type" -> string!
 RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory
 RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.ConnectionFactory(Microsoft.Extensions.Logging.ILogger<RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory!>! logger, Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! options) -> void
 RafaelKallis.Extensions.Caching.Postgres.ConnectionFactory.Dispose() -> void

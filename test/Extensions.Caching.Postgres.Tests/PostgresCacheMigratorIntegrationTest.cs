@@ -2,7 +2,6 @@ using Npgsql;
 
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
 
-[Collection(PostgresFixture.CollectionName)]
 public sealed class PostgresCacheMigratorIntegrationTest(
     ITestOutputHelper output,
     PostgresFixture postgresFixture) : IntegrationTest(output, postgresFixture)
