@@ -67,8 +67,6 @@ Additional references for PgBouncer configuration:
 
 Make sure the connection string contains `No Reset On Close=true`.
 
-```csharp
-
 ## OpenTelemetry
 
 ![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry.svg?label=stable)
