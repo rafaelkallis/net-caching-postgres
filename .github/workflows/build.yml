@@ -24,14 +24,26 @@ jobs:
       postgres:
         image: postgres:${{ matrix.postgres-version }}
         env:
-          POSTGRES_PASSWORD: pAssw0rd
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
         ports:
           - 5432:5432
+           
+      pgbouncer:
+        image: bitnami/pgbouncer:1.22.1
+        env:
+          POSTGRESQL_HOST: postgres
+          POSTGRESQL_PASSWORD: postgres
+          PGBOUNCER_DATABASE: "*"
+          PGBOUNCER_POOL_MODE: transaction
+          PGBOUNCER_MAX_PREPARED_STATEMENTS: 100
+        ports:
+          - 6432:6432
     
     steps:
     - uses: actions/checkout@v4
