@@ -39,12 +39,35 @@ The following options are available:
 - `ConnectionString`: The connection string to the PostgreSQL database.
 - `SchemaName` (`"public"`): The schema name where the cache table is located.
 - `TableName` (`"__CacheEntries"`): The name of the cache table.
+- `MigrationsHistoryTableName` (`"__CacheMigrationsHistory"`): The name of the cache table.
 - `Owner` (`"CURRENT_USER"`): The owner of the cache table.
 - `KeyMaxLength` (`1024`): The maximum length of the cache key.
+- `UsePreparedStatements` (`true`): Whether to use prepared statements for cache operations.
 - `MigrateOnStart` (`true`): Whether to automatically migrate the database on application start.
 - `UseUnloggedTable` (`false`): Whether to create the cache table as an [unlogged table](https://pganalyze.com/blog/5mins-postgres-unlogged-tables).
 - `DefaultSlidingExpiration` (`20 minutes`): The default sliding expiration for cache entries.
 - `GarbageCollectionInterval` (`30 minutes`): The interval at which the garbage collection runs.
+
+### PgBouncer
+
+If you are using [PgBouncer](https://www.pgbouncer.org) as a connection pooler with the transaction pooling mode, some additional configuration is required.
+
+If you are using pgbouncer version 1.21 or later:
+- Set the `max_prepared_transactions`to a value greater than 0 in your PgBouncer configuration.
+- Add `No Reset On Close=true;` to your connection string.
+
+For older PgBouncer versions:
+- Set `UsePreparedStatements` to `false` in the Postgres Cache configuration.
+
+Additional references for PgBouncer configuration:
+- [PgBouncer `max prepared statements` Documentation](https://www.pgbouncer.org/config.html#max_prepared_statements)
+- [Npgsql PgBouncer Documentation](https://www.npgsql.org/doc/compatibility.html#pgbouncer)
+- [Postgres Release Announcement](https://www.postgresql.org/about/news/pgbouncer-1210-released-now-with-prepared-statements-2735/)
+- [Google Results](https://www.google.com/search?q=pgbouncer+prepared+statements)
+
+Make sure the connection string contains `No Reset On Close=true`.
+
+```csharp
 
 ## OpenTelemetry
 

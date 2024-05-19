@@ -10,7 +10,7 @@ public abstract class Benchmark
     private const string DefaultHost = "127.0.0.1";
     private const string DefaultDatabase = "postgres";
     private const string DefaultUsername = "postgres";
-    private const string DefaultPassword = "pAssw0rd";
+    private const string DefaultPassword = "postgres";
 
     private string _databaseName = string.Empty;
     private string _connectionString = string.Empty;
@@ -86,5 +86,5 @@ public abstract class Benchmark
     }
 
     private static string CreateConnectionString(string host = DefaultHost, string database = DefaultDatabase, string username = DefaultUsername, string password = DefaultPassword) =>
-        $"Host={host};Database={database};Username={username};Password={password};Include Error Detail=true";
+        $"Host={host};Port=6432;Database={database};Username={username};Password={password};No Reset On Close=true;Include Error Detail=true";
 }

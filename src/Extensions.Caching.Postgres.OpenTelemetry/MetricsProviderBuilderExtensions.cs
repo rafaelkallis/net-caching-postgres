@@ -1,10 +1,13 @@
+using JetBrains.Annotations;
+
 using OpenTelemetry.Metrics;
 
-namespace Extensions.Caching.Postgres.OpenTelemetry;
+namespace RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry;
 
 /// <summary>
 /// Extensions for <see cref="MeterProviderBuilder" />
 /// </summary>
+[PublicAPI]
 public static class MeterProviderBuilderExtensions
 {
     /// <summary>

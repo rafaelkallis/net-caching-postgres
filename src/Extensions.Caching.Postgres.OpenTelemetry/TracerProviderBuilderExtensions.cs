@@ -1,10 +1,13 @@
-﻿using OpenTelemetry.Trace;
+﻿using JetBrains.Annotations;
 
-namespace Extensions.Caching.Postgres.OpenTelemetry;
+using OpenTelemetry.Trace;
+
+namespace RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry;
 
 /// <summary>
 /// Extensions for <see cref="TracerProviderBuilder" />
 /// </summary>
+[PublicAPI]
 public static class TracerProviderBuilderExtensions
 {
     /// <summary>

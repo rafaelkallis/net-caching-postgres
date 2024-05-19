@@ -1,5 +1,7 @@
 using System.Diagnostics;
 
+using JetBrains.Annotations;
+
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -18,6 +20,7 @@ public static class PostgresCacheExtensions
     /// <summary>
     /// Adds a postgres based <see cref="IDistributedCache"/>.
     /// </summary>
+    [PublicAPI]
     public static IServiceCollection AddDistributedPostgresCache(this IServiceCollection services,
         Action<PostgresCacheOptions>? configureOptions = null)
     {
@@ -52,9 +55,9 @@ public static class PostgresCacheExtensions
 
     internal static long ToMilliseconds(this TimeSpan timeSpan) =>
         Convert.ToInt64(timeSpan.TotalMilliseconds);
-    internal static NpgsqlParameter AddWithValue<T>(this NpgsqlParameterCollection parameters, NpgsqlDbType dbType, T? value) =>
+    internal static void AddWithValue<T>(this NpgsqlParameterCollection parameters, NpgsqlDbType dbType, T? value) =>
         parameters.Add(new() { NpgsqlDbType = dbType, Value = value ?? DBNull.Value as object });
 
-    internal static Activity Succeed(this Activity activity) =>
+    internal static void Succeed(this Activity activity) =>
         activity.SetTag("otel.status_code", "OK");
 }

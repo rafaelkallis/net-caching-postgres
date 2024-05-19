@@ -4,9 +4,10 @@ services:
   postgres:
     image: "postgres:16"
     environment:
-      POSTGRES_PASSWORD: "pAssw0rd"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -14,6 +15,19 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
+  
+  pgbouncer:
+    image: "bitnami/pgbouncer:1.22.1"
+    depends_on:
+      - postgres
+    environment:
+      POSTGRESQL_HOST: "postgres"
+      POSTGRESQL_PASSWORD: "postgres"
+      PGBOUNCER_DATABASE: "*"
+      PGBOUNCER_POOL_MODE: "transaction"
+      PGBOUNCER_MAX_PREPARED_STATEMENTS: "100"
+    ports:
+      - "127.0.0.1:6432:6432"
 
 volumes:
   postgres:    

@@ -23,7 +23,7 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
     {
         await base.InitializeAsync();
 
-        PostgresCacheMetrics metrics = _webApplication.Services.GetRequiredService<PostgresCacheMetrics>();
+        PostgresCacheMetrics metrics = WebApplication.Services.GetRequiredService<PostgresCacheMetrics>();
         _operationCountCollector = new(metrics.OperationCount, FakeTimeProvider);
         _operationDurationCollector = new(metrics.OperationDuration, FakeTimeProvider);
         _operationIOCollector = new(metrics.OperationIO, FakeTimeProvider);
@@ -32,8 +32,12 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         _gcRemovedEntriesCountCollector = new(metrics.GcRemovedEntriesCount, FakeTimeProvider);
     }
 
-    public void Dispose()
+    public void Dispose() { }
+
+    public override async Task DisposeAsync()
     {
+        await base.DisposeAsync();
+
         _operationCountCollector.Dispose();
         _operationDurationCollector.Dispose();
         _operationIOCollector.Dispose();
@@ -44,8 +48,14 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
 
     [Theory]
     [CombinatorialData]
-    public async Task Get_WhenItemExists_ShouldGet(bool async)
+    public async Task Get_WhenItemExists_ShouldGet(bool async, bool pgBouncer, bool usePreparedStatements)
     {
+        if (pgBouncer)
+        {
+            PostgresCacheOptions.ConnectionString = PostgresFixture.ConnectionStringPgBouncer;
+        }
+        PostgresCacheOptions.UsePreparedStatements = usePreparedStatements;
+
         string key = Guid.NewGuid().ToString();
         byte[] value = RandomNumberGenerator.GetBytes(ValueSize);
         CacheEntry cacheEntry = new(key,
@@ -81,8 +91,14 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
 
     [Theory]
     [CombinatorialData]
-    public async Task Get_WhenItemDoesNotExist_ShouldReturnNull(bool async)
+    public async Task Get_WhenItemDoesNotExist_ShouldReturnNull(bool async, bool pgBouncer, bool usePreparedStatements)
     {
+        if (pgBouncer)
+        {
+            PostgresCacheOptions.ConnectionString = PostgresFixture.ConnectionStringPgBouncer;
+        }
+        PostgresCacheOptions.UsePreparedStatements = usePreparedStatements;
+
         string key = Guid.NewGuid().ToString();
 
         byte[]? resultValue;
@@ -113,8 +129,14 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
 
     [Theory]
     [CombinatorialData]
-    public async Task Set_WhenItemDoesNotExist_ShouldAddItem(bool async, ExpirationScenarios scenario)
+    public async Task Set_WhenItemDoesNotExist_ShouldAddItem(bool async, bool pgBouncer, bool usePreparedStatements, ExpirationScenarios scenario)
     {
+        if (pgBouncer)
+        {
+            PostgresCacheOptions.ConnectionString = PostgresFixture.ConnectionStringPgBouncer;
+        }
+        PostgresCacheOptions.UsePreparedStatements = usePreparedStatements;
+
         string key = Guid.NewGuid().ToString();
         byte[] value = RandomNumberGenerator.GetBytes(ValueSize);
 
@@ -192,8 +214,14 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
 
     [Theory]
     [CombinatorialData]
-    public async Task Refresh_ShouldUpdateExpiredAt(bool async)
+    public async Task Refresh_ShouldUpdateExpiredAt(bool async, bool pgBouncer, bool usePreparedStatements)
     {
+        if (pgBouncer)
+        {
+            PostgresCacheOptions.ConnectionString = PostgresFixture.ConnectionStringPgBouncer;
+        }
+        PostgresCacheOptions.UsePreparedStatements = usePreparedStatements;
+
         string key = Guid.NewGuid().ToString();
         byte[] value = RandomNumberGenerator.GetBytes(ValueSize);
         CacheEntry cacheEntry = new(key,
@@ -225,8 +253,14 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
 
     [Theory]
     [CombinatorialData]
-    public async Task Remove_WhenItemExists_ShouldRemoveItem(bool async)
+    public async Task Remove_WhenItemExists_ShouldRemoveItem(bool async, bool pgBouncer, bool usePreparedStatements)
     {
+        if (pgBouncer)
+        {
+            PostgresCacheOptions.ConnectionString = PostgresFixture.ConnectionStringPgBouncer;
+        }
+        PostgresCacheOptions.UsePreparedStatements = usePreparedStatements;
+
         string key = Guid.NewGuid().ToString();
         byte[] value = RandomNumberGenerator.GetBytes(ValueSize);
         CacheEntry cacheEntry = new(key,
@@ -253,9 +287,15 @@ public sealed class PostgresCacheIntegrationTest(ITestOutputHelper output, Postg
         _operationIOCollector.GetMeasurementSnapshot().Should().HaveCount(0);
     }
 
-    [Fact]
-    public async Task WhenCacheEntriesAreExpired_ThenGarbageCollectorShouldRemoveThem()
+    [Theory]
+    [CombinatorialData]
+    public async Task WhenCacheEntriesAreExpired_ThenGarbageCollectorShouldRemoveThem(bool pgBouncer, bool usePreparedStatements)
     {
+        if (pgBouncer)
+        {
+            PostgresCacheOptions.ConnectionString = PostgresFixture.ConnectionStringPgBouncer;
+        }
+        PostgresCacheOptions.UsePreparedStatements = usePreparedStatements;
 
         string key1 = Guid.NewGuid().ToString();
         byte[] value1 = RandomNumberGenerator.GetBytes(ValueSize);

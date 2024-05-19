@@ -5,9 +5,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 using NSubstitute;
 
-namespace RafaelKallis.Extensions.Caching.Postgres.Tests;
+namespace RafaelKallis.Extensions.Caching.Postgres.HealthChecks.Tests;
 
-public sealed class PostgresCacheHealthCheckIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : Common.IntegrationTest(output, postgresFixture)
+public sealed class PostgresCacheHealthCheckIntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : IntegrationTest(output, postgresFixture)
 {
     private IDistributedCache CacheMock { get; } = Substitute.For<IDistributedCache>();
 

@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc.TagHelpers.Cache;
-
 using Npgsql;
 
 using NpgsqlTypes;
@@ -8,29 +6,41 @@ namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    private const string DefaultHost = "127.0.0.1";
-    private const string DefaultDatabase = "postgres";
-    private const string DefaultUsername = "postgres";
-    private const string DefaultPassword = "pAssw0rd";
-
     private readonly string _adminConnectionString;
     private readonly string _testDatabase;
-    private readonly string _testConnectionString;
-    private readonly NpgsqlDataSource _dataSource;
-
-    public string ConnectionString => _testConnectionString;
+    public string ConnectionString { get; private set; }
+    public string ConnectionStringPgBouncer { get; private set; }
 
     public PostgresFixture()
     {
-        _adminConnectionString = CreateConnectionString();
-        _testDatabase = $"test_{DateTimeOffset.UtcNow:o}_{Guid.NewGuid():N}";
-        _testConnectionString = CreateConnectionString(database: _testDatabase);
-        _dataSource = NpgsqlDataSource.Create(ConnectionString);
+        _adminConnectionString = "Host=127.0.0.1;Port=5432;Database=postgres;Username=postgres;Password=postgres;Include Error Detail=true;";
+        _testDatabase = $"test_{DateTimeOffset.UtcNow:o}";
+        ConnectionString = $"Host=127.0.0.1;Port=5432;Database={_testDatabase};Username=postgres;Password=postgres;Include Error Detail=true;";
+        ConnectionStringPgBouncer = $"Host=127.0.0.1;Port=6432;Database={_testDatabase};Username=postgres;Password=postgres;No Reset On Close=true;Include Error Detail=true;";
     }
 
-    public async Task<NpgsqlConnection> OpenConnection()
+    public async Task InitializeAsync()
     {
-        NpgsqlConnection connection = _dataSource.CreateConnection();
+        await using NpgsqlConnection connection = new(_adminConnectionString);
+        await connection.OpenAsync();
+        string sql = $@"CREATE DATABASE ""{_testDatabase}"";";
+        await using NpgsqlCommand command = new(sql, connection);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await Task.CompletedTask;
+        // string sql = $@"DROP DATABASE ""{_testDatabase}"" (FORCE);";
+        // await using NpgsqlConnection connection = new(_adminConnectionString);
+        // await connection.OpenAsync();
+        // await using NpgsqlCommand command = new(sql, connection);
+        // await command.ExecuteNonQueryAsync(); 
+    }
+
+    public async Task<NpgsqlConnection> OpenConnectionAsync()
+    {
+        NpgsqlConnection connection = new(ConnectionString);
         await connection.OpenAsync();
         return connection;
     }
@@ -42,7 +52,7 @@ public sealed class PostgresFixture : IAsyncLifetime
             INSERT INTO ""{schema}"".""{table}""
             (""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration"")
             VALUES ($1, $2, $3, $4, $5);";
-        await using NpgsqlConnection connection = await OpenConnection();
+        await using NpgsqlConnection connection = await OpenConnectionAsync();
         await using NpgsqlCommand command = new(sql, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, cacheEntry.Key);
         command.Parameters.AddWithValue(NpgsqlDbType.Bytea, cacheEntry.Value);
@@ -56,7 +66,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task Truncate(string schema = PostgresCacheConstants.DefaultSchemaName, string table = PostgresCacheConstants.DefaultTableName)
     {
         string sql = $@"TRUNCATE TABLE ""{schema}"".""{table}""";
-        await using NpgsqlConnection connection = await OpenConnection();
+        await using NpgsqlConnection connection = await OpenConnectionAsync();
         await using NpgsqlCommand command = new(sql, connection);
         await command.ExecuteNonQueryAsync();
     }
@@ -67,7 +77,7 @@ public sealed class PostgresFixture : IAsyncLifetime
             SELECT ""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration""
             FROM ""{schema}"".""{table}""
             WHERE ""Key"" = $1;";
-        await using NpgsqlConnection connection = await OpenConnection();
+        await using NpgsqlConnection connection = await OpenConnectionAsync();
         await using NpgsqlCommand command = new(sql, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
         await command.PrepareAsync();
@@ -95,7 +105,7 @@ public sealed class PostgresFixture : IAsyncLifetime
             SELECT ""Key"", ""Value"", ""ExpiresAt"", ""SlidingExpiration"", ""AbsoluteExpiration""
             FROM ""{schema}"".""{table}""
             WHERE ""Key"" LIKE $1;";
-        await using NpgsqlConnection connection = await OpenConnection();
+        await using NpgsqlConnection connection = await OpenConnectionAsync();
         await using NpgsqlCommand command = new(sql, connection);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, keyPattern);
         await command.PrepareAsync();
@@ -114,26 +124,4 @@ public sealed class PostgresFixture : IAsyncLifetime
                     : null);
         }
     }
-
-    public async Task InitializeAsync()
-    {
-        await using NpgsqlConnection connection = new(_adminConnectionString);
-        await connection.OpenAsync();
-        string sql = $@"CREATE DATABASE ""{_testDatabase}"";";
-        await using NpgsqlCommand command = new(sql, connection);
-        await command.ExecuteNonQueryAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await _dataSource.DisposeAsync();
-        string sql = $@"DROP DATABASE ""{_testDatabase}"" (FORCE);";
-        await using NpgsqlConnection connection = new(_adminConnectionString);
-        await connection.OpenAsync();
-        await using NpgsqlCommand command = new(sql, connection);
-        await command.ExecuteNonQueryAsync();
-    }
-
-    private static string CreateConnectionString(string host = DefaultHost, string database = DefaultDatabase, string username = DefaultUsername, string password = DefaultPassword) =>
-        $"Host={host};Database={database};Username={username};Password={password};Include Error Detail=true;";
 }

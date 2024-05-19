@@ -33,6 +33,8 @@ RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.KeyMaxLength.get -
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.KeyMaxLength.set -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.MigrateOnStart.get -> bool
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.MigrateOnStart.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.MigrationHistoryTableName.get -> string!
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.MigrationHistoryTableName.set -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.Owner.get -> string!
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.Owner.set -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.PostgresCacheOptions() -> void
@@ -40,6 +42,8 @@ RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.SchemaName.get -> 
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.SchemaName.set -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.TableName.get -> string!
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.TableName.set -> void
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.UsePreparedStatements.get -> bool
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.UsePreparedStatements.set -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.UseUnloggedTable.get -> bool
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.UseUnloggedTable.set -> void
 RafaelKallis.Extensions.Caching.Postgres.SqlQueries

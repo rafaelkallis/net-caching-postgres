@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
 /// <summary>
-/// Metrics related to the Posgres cache.
+/// Metrics related to the Postgres cache.
 /// </summary>
 public sealed class PostgresCacheMetrics
 {
@@ -31,7 +31,7 @@ public sealed class PostgresCacheMetrics
     internal readonly Histogram<double> GcDuration;
     internal readonly Histogram<long> GcRemovedEntriesCount;
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="PostgresCacheMetrics"/>
     public PostgresCacheMetrics(IMeterFactory meterFactory, IOptions<PostgresCacheOptions> options)
     {
         ArgumentNullException.ThrowIfNull(options);

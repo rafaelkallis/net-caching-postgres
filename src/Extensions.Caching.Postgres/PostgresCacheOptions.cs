@@ -18,9 +18,14 @@ public class PostgresCacheOptions
     public string SchemaName { get; set; } = PostgresCacheConstants.DefaultSchemaName;
 
     /// <summary>
-    /// The name of the table.
+    /// The name of the cache entries table.
     /// </summary>
     public string TableName { get; set; } = PostgresCacheConstants.DefaultTableName;
+
+    /// <summary>
+    /// The name of the migrations history table.
+    /// </summary>
+    public string MigrationHistoryTableName { get; set; } = PostgresCacheConstants.DefaultMigrationsHistoryTableName;
 
     /// <summary>
     /// Used to set the owner of the schema and table.
@@ -32,6 +37,12 @@ public class PostgresCacheOptions
     /// Maximum length of the key.
     /// </summary>
     public int KeyMaxLength { get; set; } = PostgresCacheConstants.DefaultKeyMaxLength;
+
+    /// <summary>
+    /// Whether to use prepared statements.
+    /// You should only disable this for special cases, for example for old pgbouncer configurations. 
+    /// </summary>
+    public bool UsePreparedStatements { get; set; } = PostgresCacheConstants.DefaultUsePreparedStatements;
 
     /// <summary>
     /// Whether the database should be migrated on start.

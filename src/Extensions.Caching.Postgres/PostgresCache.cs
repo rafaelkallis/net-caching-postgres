@@ -1,5 +1,6 @@
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 using Microsoft.Extensions.Caching.Distributed;
@@ -26,6 +27,8 @@ public sealed partial class PostgresCache(
 {
     private const string SqlStateTransactionRollbackPrefix = "40";
 
+    private PostgresCacheOptions Options => postgresCacheOptions.Value;
+
     /// <inheritdoc />
     public byte[]? Get(string key)
     {
@@ -33,10 +36,20 @@ public sealed partial class PostgresCache(
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
-        using NpgsqlCommand command = new(sqlQueries.GetCacheEntry, connection);
-        command.Parameters.AddWithValue<string>(NpgsqlDbType.Varchar, key);
-        command.Parameters.AddWithValue<long>(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
-        command.Prepare();
+        string sql = sqlQueries.GetCacheEntry;
+        if (!Options.UsePreparedStatements)
+        {
+            sql = sql.Replace("$1", $"'{key}'", StringComparison.Ordinal)
+                .Replace("$2", now.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+        }
+        LogGeneratedSql(logger, sql);
+        using NpgsqlCommand command = new(sql, connection);
+        if (Options.UsePreparedStatements)
+        {
+            command.Parameters.AddWithValue<string>(NpgsqlDbType.Varchar, key);
+            command.Parameters.AddWithValue<long>(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
+            command.Prepare();
+        }
         using NpgsqlDataReader dataReader = command.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult);
 
         if (!dataReader.Read())
@@ -63,15 +76,27 @@ public sealed partial class PostgresCache(
         DateTimeOffset now = timeProvider.GetUtcNow();
 
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
-        await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);
 
-        using NpgsqlCommand command = new(sqlQueries.GetCacheEntry, connection);
-        command.Parameters.AddWithValue<string>(NpgsqlDbType.Varchar, key);
-        command.Parameters.AddWithValue<long>(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
-        await command.PrepareAsync(token).ConfigureAwait(false);
+        string sql = sqlQueries.GetCacheEntry;
+        if (!Options.UsePreparedStatements)
+        {
+            sql = sql.Replace("$1", $"'{key}'", StringComparison.Ordinal)
+                .Replace("$2", now.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+        }
+        LogGeneratedSql(logger, sql);
+        NpgsqlCommand command = new(sql, connection);
+        await using ConfiguredAsyncDisposable _commCAD = command.ConfigureAwait(false);
+
+        if (Options.UsePreparedStatements)
+        {
+            command.Parameters.AddWithValue<string>(NpgsqlDbType.Varchar, key);
+            command.Parameters.AddWithValue<long>(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
+            await command.PrepareAsync(token).ConfigureAwait(false);
+        }
 
         NpgsqlDataReader dataReader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow | CommandBehavior.SingleResult, token).ConfigureAwait(false);
-        await using ConfiguredAsyncDisposable _2 = dataReader.ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable _drCAD = dataReader.ConfigureAwait(false);
 
         if (!await dataReader.ReadAsync(token).ConfigureAwait(false))
         {
@@ -79,7 +104,6 @@ public sealed partial class PostgresCache(
             metrics.Get(key, duration: stopwatch.Elapsed, hit: false, bytesRead: 0);
             return null;
         }
-
 
         byte[] value = await dataReader.GetFieldValueAsync<byte[]>(0, token).ConfigureAwait(false);
 
@@ -107,13 +131,26 @@ public sealed partial class PostgresCache(
         Debug.Assert(slidingExpiration is not null || absoluteExpiration is not null);
 
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
-        using NpgsqlCommand command = new(sqlQueries.SetCacheEntry, connection);
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, expiresAt.ToUnixTimeMilliseconds());
-        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, slidingExpiration?.ToMilliseconds());
-        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, absoluteExpiration?.ToUnixTimeMilliseconds());
-        command.Prepare();
+        string sql = sqlQueries.SetCacheEntry;
+        if (!Options.UsePreparedStatements)
+        {
+            sql = sql.Replace("$1", $"'{key}'", StringComparison.Ordinal)
+                .Replace("$2", $"decode('{Convert.ToBase64String(value)}', 'base64')", StringComparison.Ordinal)
+                .Replace("$3", expiresAt.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal)
+                .Replace("$4", slidingExpiration?.ToMilliseconds().ToString(CultureInfo.InvariantCulture) ?? "NULL", StringComparison.Ordinal)
+                .Replace("$5", absoluteExpiration?.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture) ?? "NULL", StringComparison.Ordinal);
+        }
+        LogGeneratedSql(logger, sql);
+        using NpgsqlCommand command = new(sql, connection);
+        if (Options.UsePreparedStatements)
+        {
+            command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+            command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
+            command.Parameters.AddWithValue(NpgsqlDbType.Bigint, expiresAt.ToUnixTimeMilliseconds());
+            command.Parameters.AddWithValue<long?>(NpgsqlDbType.Bigint, slidingExpiration?.ToMilliseconds());
+            command.Parameters.AddWithValue<long?>(NpgsqlDbType.Bigint, absoluteExpiration?.ToUnixTimeMilliseconds());
+            command.Prepare();
+        }
         command.ExecuteNonQuery();
 
         LogCacheEntryAdded(logger, key);
@@ -138,15 +175,29 @@ public sealed partial class PostgresCache(
         Debug.Assert(slidingExpiration is not null || absoluteExpiration is not null);
 
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
-        await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);
 
-        using NpgsqlCommand command = new(sqlQueries.SetCacheEntry, connection);
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, expiresAt.ToUnixTimeMilliseconds());
-        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, slidingExpiration?.ToMilliseconds());
-        PostgresCacheExtensions.AddWithValue(command.Parameters, NpgsqlDbType.Bigint, absoluteExpiration?.ToUnixTimeMilliseconds());
-        await command.PrepareAsync(token).ConfigureAwait(false);
+        string sql = sqlQueries.SetCacheEntry;
+        if (!Options.UsePreparedStatements)
+        {
+            sql = sql.Replace("$1", $"'{key}'", StringComparison.Ordinal)
+                .Replace("$2", $"decode('{Convert.ToBase64String(value)}', 'base64')", StringComparison.Ordinal)
+                .Replace("$3", expiresAt.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal)
+                .Replace("$4", slidingExpiration?.ToMilliseconds().ToString(CultureInfo.InvariantCulture) ?? "NULL", StringComparison.Ordinal)
+                .Replace("$5", absoluteExpiration?.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture) ?? "NULL", StringComparison.Ordinal);
+        }
+        LogGeneratedSql(logger, sql);
+        NpgsqlCommand command = new(sql, connection);
+        await using ConfiguredAsyncDisposable _commCAD = command.ConfigureAwait(false);
+        if (Options.UsePreparedStatements)
+        {
+            command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+            command.Parameters.AddWithValue(NpgsqlDbType.Bytea, value);
+            command.Parameters.AddWithValue(NpgsqlDbType.Bigint, expiresAt.ToUnixTimeMilliseconds());
+            command.Parameters.AddWithValue<long?>(NpgsqlDbType.Bigint, slidingExpiration?.ToMilliseconds());
+            command.Parameters.AddWithValue<long?>(NpgsqlDbType.Bigint, absoluteExpiration?.ToUnixTimeMilliseconds());
+            await command.PrepareAsync(token).ConfigureAwait(false);
+        }
         await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
 
         LogCacheEntryAdded(logger, key);
@@ -161,10 +212,20 @@ public sealed partial class PostgresCache(
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTimeOffset now = timeProvider.GetUtcNow();
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
-        using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry, connection);
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
-        command.Prepare();
+        string sql = sqlQueries.RefreshCacheEntry;
+        if (!Options.UsePreparedStatements)
+        {
+            sql = sql.Replace("$1", $"'{key}'", StringComparison.Ordinal)
+                .Replace("$2", now.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+        }
+        LogGeneratedSql(logger, sql);
+        using NpgsqlCommand command = new(sql, connection);
+        if (Options.UsePreparedStatements)
+        {
+            command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+            command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
+            command.Prepare();
+        }
         command.ExecuteNonQuery();
 
         LogCacheEntryRefreshed(logger, key);
@@ -180,12 +241,23 @@ public sealed partial class PostgresCache(
         DateTimeOffset now = timeProvider.GetUtcNow();
 
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
-        await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);
 
-        using NpgsqlCommand command = new(sqlQueries.RefreshCacheEntry, connection);
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
-        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
-        await command.PrepareAsync(token).ConfigureAwait(false);
+        string sql = sqlQueries.RefreshCacheEntry;
+        if (!Options.UsePreparedStatements)
+        {
+            sql = sql.Replace("$1", $"'{key}'", StringComparison.Ordinal)
+                .Replace("$2", now.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+        }
+        LogGeneratedSql(logger, sql);
+        NpgsqlCommand command = new(sql, connection);
+        await using ConfiguredAsyncDisposable _commCAD = command.ConfigureAwait(false);
+        if (Options.UsePreparedStatements)
+        {
+            command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+            command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
+            await command.PrepareAsync(token).ConfigureAwait(false);
+        }
         await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
 
         LogCacheEntryRefreshed(logger, key);
@@ -199,9 +271,18 @@ public sealed partial class PostgresCache(
         using Activity? activity = PostgresCacheActivitySource.StartRemoveActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
-        using NpgsqlCommand command = new(sqlQueries.RemoveCacheEntry, connection);
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
-        command.Prepare();
+        string sql = sqlQueries.RemoveCacheEntry;
+        if (!Options.UsePreparedStatements)
+        {
+            sql = sql.Replace("$1", $"'{key}'", StringComparison.Ordinal);
+        }
+        LogGeneratedSql(logger, sql);
+        using NpgsqlCommand command = new(sql, connection);
+        if (Options.UsePreparedStatements)
+        {
+            command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+            command.Prepare();
+        }
         command.ExecuteNonQuery();
 
         LogCacheEntryRemoved(logger, key);
@@ -216,11 +297,22 @@ public sealed partial class PostgresCache(
         Stopwatch stopwatch = Stopwatch.StartNew();
 
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
-        await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);
 
-        using NpgsqlCommand command = new(sqlQueries.RemoveCacheEntry, connection);
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
-        await command.PrepareAsync(token).ConfigureAwait(false);
+        string sql = sqlQueries.RemoveCacheEntry;
+        if (!Options.UsePreparedStatements)
+        {
+            sql = sql.Replace("$1", $"'{key}'", StringComparison.Ordinal);
+        }
+        LogGeneratedSql(logger, sql);
+        NpgsqlCommand command = new(sql, connection);
+        await using ConfiguredAsyncDisposable _commCAD = command.ConfigureAwait(false);
+        if (Options.UsePreparedStatements)
+        {
+            command.Parameters.AddWithValue(NpgsqlDbType.Varchar, key);
+            await command.PrepareAsync(token).ConfigureAwait(false);
+        }
+
         await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
 
         LogCacheEntryRemoved(logger, key);
@@ -242,13 +334,23 @@ public sealed partial class PostgresCache(
         DateTimeOffset now = timeProvider.GetUtcNow();
         LogDeletingExpiredCacheEntries(logger);
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(ct).ConfigureAwait(false);
-        await using ConfiguredAsyncDisposable _ = connection.ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);
 
         try
         {
-            using NpgsqlCommand command = new(sqlQueries.DeleteExpiredCacheEntries, connection);
-            command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
-            await command.PrepareAsync(ct).ConfigureAwait(false);
+            string sql = sqlQueries.DeleteExpiredCacheEntries;
+            if (!Options.UsePreparedStatements)
+            {
+                sql = sql.Replace("$1", now.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+            }
+            LogGeneratedSql(logger, sql);
+            NpgsqlCommand command = new(sql, connection);
+            await using ConfiguredAsyncDisposable _commCAD = command.ConfigureAwait(false);
+            if (Options.UsePreparedStatements)
+            {
+                command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
+                await command.PrepareAsync(ct).ConfigureAwait(false);
+            }
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             LogDeletedExpiredCacheEntries(logger, rows);
             metrics.GarbageCollection(duration: stopwatch.Elapsed, removedEntriesCount: rows);
@@ -270,9 +372,19 @@ public sealed partial class PostgresCache(
 
         try
         {
-            using NpgsqlCommand command = new(sqlQueries.DeleteExpiredCacheEntriesWithLock, connection);
-            command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
-            await command.PrepareAsync(ct).ConfigureAwait(false);
+            string sql = sqlQueries.DeleteExpiredCacheEntriesWithLock;
+            if (!Options.UsePreparedStatements)
+            {
+                sql = sql.Replace("$1", now.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+            }
+            LogGeneratedSql(logger, sql);
+            NpgsqlCommand command = new(sql, connection);
+            await using ConfiguredAsyncDisposable _commCAD = command.ConfigureAwait(false);
+            if (Options.UsePreparedStatements)
+            {
+                command.Parameters.AddWithValue(NpgsqlDbType.Bigint, now.ToUnixTimeMilliseconds());
+                await command.PrepareAsync(ct).ConfigureAwait(false);
+            }
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             LogDeletedExpiredCacheEntries(logger, rows);
             metrics.GarbageCollection(duration: stopwatch.Elapsed, removedEntriesCount: rows);
@@ -288,13 +400,16 @@ public sealed partial class PostgresCache(
 
         try
         {
-            using NpgsqlCommand command = new(sqlQueries.TruncateCacheEntries, connection);
-            await command.PrepareAsync(ct).ConfigureAwait(false);
+            NpgsqlCommand command = new(sqlQueries.TruncateCacheEntries, connection);
+            await using ConfiguredAsyncDisposable _commCAD = command.ConfigureAwait(false);
+            if (Options.UsePreparedStatements)
+            {
+                await command.PrepareAsync(ct).ConfigureAwait(false);
+            }
             int rows = await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             LogDeletedExpiredCacheEntries(logger, rows);
             metrics.GarbageCollection(duration: stopwatch.Elapsed, removedEntriesCount: rows);
             activity?.Succeed();
-            return;
         }
         catch (NpgsqlException e)
         {
@@ -311,11 +426,12 @@ public sealed partial class PostgresCache(
         using Activity? activity = PostgresCacheActivitySource.StartMigrationActivity();
 
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(ct).ConfigureAwait(false);
-        await using ConfiguredAsyncDisposable _ccad = connection.ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);
         NpgsqlTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable, ct).ConfigureAwait(false);
-        await using ConfiguredAsyncDisposable _tcad = transaction.ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable _txCAD = transaction.ConfigureAwait(false);
+        NpgsqlCommand command = new(sqlQueries.Migration, connection, transaction);
+        await using ConfiguredAsyncDisposable _commCAD = command.ConfigureAwait(false);
 
-        using NpgsqlCommand command = new(sqlQueries.Migration, connection, transaction);
         await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         await transaction.CommitAsync(ct).ConfigureAwait(false);
         LogDatabaseMigrated(logger);
@@ -408,4 +524,7 @@ public sealed partial class PostgresCache(
 
     [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Database migrated")]
     private static partial void LogDatabaseMigrated(ILogger logger);
+
+    [LoggerMessage(EventId = 9, Level = LogLevel.Debug, Message = "Generated SQL: {Sql}")]
+    private static partial void LogGeneratedSql(ILogger logger, string sql);
 }

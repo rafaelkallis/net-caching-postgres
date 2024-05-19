@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -18,7 +17,6 @@ public class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, 
     {
         ArgumentNullException.ThrowIfNull(context);
         DateTimeOffset start = timeProvider.GetUtcNow();
-        TimeSpan elapsed = TimeSpan.Zero;
         string key = $"HealthCheck:{start:O}";
         byte[] value = RandomNumberGenerator.GetBytes(16);
 
@@ -37,7 +35,7 @@ public class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, 
             Task setTask = cache.SetAsync(key, value, entryOptions, cancellationToken);
             await Task.WhenAny([setTask, timeoutTask]).ConfigureAwait(false);
 
-            elapsed = timeProvider.GetUtcNow() - start;
+            TimeSpan elapsed = timeProvider.GetUtcNow() - start;
             if (elapsed >= options.Value.UnhealthyTimeout)
             {
                 return HealthCheckResult.Unhealthy("The cache response time is unhealthy.");

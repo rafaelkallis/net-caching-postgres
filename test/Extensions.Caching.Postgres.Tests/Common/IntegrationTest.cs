@@ -9,7 +9,7 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
     protected ITestOutputHelper Output { get; } = output;
     protected PostgresFixture PostgresFixture { get; } = postgresFixture;
 
-    protected WebApplication _webApplication { get; private set; } = null!;
+    protected WebApplication WebApplication { get; private set; } = null!;
     protected FakeTimeProvider FakeTimeProvider { get; private set; } = new();
     protected HttpClient Client { get; private set; } = null!;
     protected PostgresCache PostgresCache { get; private set; } = null!;
@@ -21,12 +21,12 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
         webApplicationBuilder.WebHost.UseTestServer();
         ConfigureLogging(webApplicationBuilder.Logging);
         ConfigureServices(webApplicationBuilder.Services);
-        _webApplication = webApplicationBuilder.Build();
-        ConfigureApplication(_webApplication);
-        await _webApplication.StartAsync();
-        Client = _webApplication.GetTestClient();
-        PostgresCache = _webApplication.Services.GetRequiredService<PostgresCache>();
-        PostgresCacheOptions = _webApplication.Services.GetRequiredService<IOptions<PostgresCacheOptions>>().Value;
+        WebApplication = webApplicationBuilder.Build();
+        ConfigureApplication(WebApplication);
+        await WebApplication.StartAsync();
+        Client = WebApplication.GetTestClient();
+        PostgresCache = WebApplication.Services.GetRequiredService<PostgresCache>();
+        PostgresCacheOptions = WebApplication.Services.GetRequiredService<IOptions<PostgresCacheOptions>>().Value;
     }
 
     public virtual async Task DisposeAsync()
@@ -35,12 +35,8 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
 
         Client.Dispose();
 
-        if (_webApplication is not null)
-        {
-            await _webApplication.StopAsync();
-            await _webApplication.DisposeAsync();
-        }
-        _webApplication = null!;
+        await WebApplication.StopAsync();
+        await WebApplication.DisposeAsync();
     }
 
     protected virtual void ConfigureLogging(ILoggingBuilder logging)

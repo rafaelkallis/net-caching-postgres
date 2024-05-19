@@ -22,12 +22,22 @@ public class SqlQueries
         ArgumentNullException.ThrowIfNull(options);
         string schemaName = options.Value.SchemaName;
         string tableName = options.Value.TableName;
+        string migrationsTableName = options.Value.MigrationHistoryTableName;
         string owner = options.Value.Owner;
         int keyMaxLength = options.Value.KeyMaxLength;
         string unlogged = options.Value.UseUnloggedTable ? "UNLOGGED" : string.Empty;
 
         Migration = $@"
             CREATE SCHEMA IF NOT EXISTS ""{schemaName}"" AUTHORIZATION {owner};
+            
+            CREATE TABLE IF NOT EXISTS ""{schemaName}"".""{migrationsTableName}"" (
+                ""Version"" INT NOT NULL PRIMARY KEY,
+                ""AppliedAt"" TIMESTAMP WITH TIME ZONE NOT NULL
+            );
+
+            INSERT INTO ""{schemaName}"".""{migrationsTableName}"" (""Version"", ""AppliedAt"")
+                VALUES (1, CURRENT_TIMESTAMP)
+            ON CONFLICT DO NOTHING;
 
             CREATE {unlogged} TABLE IF NOT EXISTS ""{schemaName}"".""{tableName}"" (
                 ""Key"" VARCHAR({keyMaxLength}) PRIMARY KEY,
