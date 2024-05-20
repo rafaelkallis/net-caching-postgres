@@ -6,6 +6,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
   <ItemGroup>

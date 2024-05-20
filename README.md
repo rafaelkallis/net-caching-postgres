@@ -1,8 +1,6 @@
 # .NET Postgres Cache
 
-![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.svg?label=stable)
-![nuget-preview](https://img.shields.io/nuget/vpre/RafaelKallis.Extensions.Caching.Postgres.svg?label=preview)
-![net-caching-postgres-build](https://github.com/rafaelkallis/net-caching-postgres/actions/workflows/build.yml/badge.svg)
+[![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.svg?label=stable)](https://www.nuget.org/packages/RafaelKallis.Extensions.Caching.Postgres/)
 
 Distributed cache implementation of [IDistributedCache](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.caching.distributed.idistributedcache) using PostgreSQL.
 
@@ -69,8 +67,7 @@ Make sure the connection string contains `No Reset On Close=true`.
 
 ## OpenTelemetry
 
-![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry.svg?label=stable)
-![nuget-preview](https://img.shields.io/nuget/vpre/RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry.svg?label=preview)
+[![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry.svg?label=stable)](https://www.nuget.org/packages/RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry/)
 
 [OpenTelemetry](https://opentelemetry.io) is a widely-adopted framework for distributed observability across many languages and components. Its tracing standards allow applications and libraries to emit information on activities and events, which can be exported by the application, stored and analyzed. Activities typically have start and end times, and can encompass other activities recursivelyr. This allows you to analyze e.g. exactly how much time was spent in the database when handling a certain HTTP call.
 
@@ -110,8 +107,7 @@ builder.Services.AddOpenTelemetry()
 
 ## Health Checks
 
-![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.HealthChecks.svg?label=stable)
-![nuget-preview](https://img.shields.io/nuget/vpre/RafaelKallis.Extensions.Caching.Postgres.HealthChecks.svg?label=preview)
+[![nuget-stable](https://img.shields.io/nuget/v/RafaelKallis.Extensions.Caching.Postgres.HealthChecks.svg?label=stable)](https://www.nuget.org/packages/RafaelKallis.Extensions.Caching.Postgres.HealthChecks/)
 
 [Health checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) are typically used with an external monitoring service or container orchestrator to check the status of an app. Before adding health checks to an app, decide on which monitoring system to use. The monitoring system dictates what types of health checks to create and how to configure their endpoints.
 
