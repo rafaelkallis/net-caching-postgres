@@ -16,9 +16,9 @@ jobs:
   build:
     strategy:
       matrix: 
-        postgres-version: [ 16, 15, 14, 13 ]
+        postgres-version: [ 17, 16, 15, 14 ]
     
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     
     services:
       postgres:
@@ -72,7 +72,7 @@ jobs:
         
   release:
     needs: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: >-
       github.event_name == 'push' && (
         startsWith(github.ref, 'refs/heads/release/') ||

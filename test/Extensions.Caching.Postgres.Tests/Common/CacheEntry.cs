@@ -1,6 +1,6 @@
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
-public record CacheEntry(
+public sealed record CacheEntry(
     string Key,
     ICollection<byte> Value,
     DateTimeOffset ExpiresAt,

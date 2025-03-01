@@ -12,7 +12,7 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - "127.0.0.1:5432:5432"
+      - "5432:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
   
@@ -27,7 +27,7 @@ services:
       PGBOUNCER_POOL_MODE: "transaction"
       PGBOUNCER_MAX_PREPARED_STATEMENTS: "100"
     ports:
-      - "127.0.0.1:6432:6432"
+      - "6432:6432"
 
 volumes:
   postgres:    

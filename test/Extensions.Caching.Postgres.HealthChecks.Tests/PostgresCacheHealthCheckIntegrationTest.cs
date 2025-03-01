@@ -65,7 +65,7 @@ public sealed class PostgresCacheHealthCheckIntegrationTest(ITestOutputHelper ou
             HealthStatus.Unhealthy => HttpStatusCode.ServiceUnavailable,
             _ => throw new ArgumentOutOfRangeException(nameof(healthStatus)),
         };
-        response.Should().HaveStatusCode(expectedStatusCode);
+        response.StatusCode.Should().Be(expectedStatusCode);
         string content = await response.Content.ReadAsStringAsync();
         content.Should().Be(healthStatus.ToString());
     }

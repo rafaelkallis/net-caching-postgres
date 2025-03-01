@@ -1,6 +1,9 @@
 #### .NET Coding Conventions ####
 [*.{cs,vb}]
 
+# CA1515: Consider making public types internal
+dotnet_diagnostic.CA1515.severity = none
+
 # CA1707: Remove the underscore
 dotnet_diagnostic.CA1707.severity = none
 
