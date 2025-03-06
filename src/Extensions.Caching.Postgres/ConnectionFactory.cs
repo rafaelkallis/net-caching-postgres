@@ -15,14 +15,24 @@ public sealed partial class ConnectionFactory : IDisposable, IAsyncDisposable
     private readonly ILogger<ConnectionFactory> _logger;
     private readonly IOptions<PostgresCacheOptions> _options;
     private readonly NpgsqlDataSource _dataSource;
+    private readonly bool _isDataSourceOwner;
 
     /// <inheritdoc cref="ConnectionFactory"/>
     public ConnectionFactory(ILogger<ConnectionFactory> logger, IOptions<PostgresCacheOptions> options)
     {
         _logger = logger;
         _options = options;
-        NpgsqlDataSourceBuilder dataSourceBuilder = new(_options.Value.ConnectionString);
-        _dataSource = dataSourceBuilder.Build();
+        if (_options.Value.DataSource is not null)
+        {
+            _dataSource = _options.Value.DataSource;
+            _isDataSourceOwner = false;
+        }
+        else
+        {
+            NpgsqlDataSourceBuilder builder = new(_options.Value.ConnectionString);
+            _dataSource = builder.Build();
+            _isDataSourceOwner = true;
+        }
     }
 
     /// <summary>
@@ -51,14 +61,19 @@ public sealed partial class ConnectionFactory : IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        _dataSource.Dispose();
+        if (_isDataSourceOwner){
+            _dataSource.Dispose();
+        }
     }
 
     /// <inheritdoc />
 
     public async ValueTask DisposeAsync()
     {
-        await _dataSource.DisposeAsync().ConfigureAwait(false);
+        if (_isDataSourceOwner)
+        {
+            await _dataSource.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Creating a new connection to the database")]

@@ -485,10 +485,11 @@
       },
       "Npgsql": {
         "type": "Transitive",
-        "resolved": "9.0.3",
-        "contentHash": "tPvY61CxOAWxNsKLEBg+oR646X4Bc8UmyQ/tJszL/7mEmIXQnnBhVJZrZEEUv0Bstu0mEsHZD5At3EO8zQRAYw==",
+        "resolved": "9.0.0",
+        "contentHash": "zu1nCRt0gWP/GR0reYgg0Bl5o8qyNV7mVAgzAbVLRiAd1CYXcf/9nrubPH0mt93u8iGTKmYqWaLVECEAcE6IfQ==",
         "dependencies": {
-          "Microsoft.Extensions.Logging.Abstractions": "8.0.2"
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.2",
+          "System.Text.Json": "9.0.0"
         }
       },
       "System.Diagnostics.EventLog": {
@@ -500,6 +501,11 @@
         "type": "Transitive",
         "resolved": "1.6.0",
         "contentHash": "COC1aiAJjCoA5GBF+QKL2uLqEBew4JsCkQmoHKbN3TlOZKa2fKLz5CpiRQKDz0RsAOEGsVKqOD5bomsXq/4STQ=="
+      },
+      "System.Text.Json": {
+        "type": "Transitive",
+        "resolved": "9.0.0",
+        "contentHash": "js7+qAu/9mQvnhA4EfGMZNEzXtJCDxgkgj8ohuxq/Qxv+R56G+ljefhiJHOxTNiw54q8vmABCWUwkMulNdlZ4A=="
       },
       "xunit.abstractions": {
         "type": "Transitive",
@@ -558,7 +564,7 @@
           "Microsoft.Extensions.TimeProvider.Testing": "[9.2.0, )",
           "Microsoft.NET.Test.Sdk": "[17.13.0, )",
           "NSubstitute": "[5.3.0, )",
-          "RafaelKallis.Extensions.Caching.Postgres": "[8.0.13, )",
+          "RafaelKallis.Extensions.Caching.Postgres": "[9.1.0, )",
           "System.Linq.Async": "[6.0.1, )",
           "Xunit.Combinatorial": "[1.6.24, )",
           "xunit": "[2.9.3, )"
@@ -572,7 +578,7 @@
           "Microsoft.Extensions.Caching.Abstractions": "[9.0.0, )",
           "Microsoft.Extensions.Hosting": "[9.0.0, )",
           "Microsoft.Extensions.Options": "[9.0.0, )",
-          "Npgsql": "[9.0.3, )"
+          "Npgsql": "[9.0.0, )"
         }
       },
       "RafaelKallis.Extensions.Caching.Postgres.HealthChecks": {

@@ -6,9 +6,9 @@ public sealed class PostgresCacheMigratorIntegrationTest(
     ITestOutputHelper output,
     PostgresFixture postgresFixture) : IntegrationTest(output, postgresFixture)
 {
-    protected override void ConfigureOptions(PostgresCacheOptions options)
+    protected override void ConfigureOptions(PostgresCacheOptions options, IServiceProvider serviceProvider)
     {
-        base.ConfigureOptions(options);
+        base.ConfigureOptions(options, serviceProvider);
         options.MigrateOnStart = false;
     }
 

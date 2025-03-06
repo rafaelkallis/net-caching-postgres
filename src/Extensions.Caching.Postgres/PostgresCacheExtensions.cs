@@ -22,10 +22,23 @@ public static class PostgresCacheExtensions
     /// </summary>
     [PublicAPI]
     public static IServiceCollection AddDistributedPostgresCache(this IServiceCollection services,
-        Action<PostgresCacheOptions>? configureOptions = null)
+        Action<PostgresCacheOptions> configureOptions)
     {
         configureOptions ??= _ => { };
 
+        return services.AddDistributedPostgresCache((options, sp) =>
+        {
+            configureOptions(options);
+        });
+    }
+
+    /// <summary>
+    /// Adds a postgres based <see cref="IDistributedCache"/>.
+    /// </summary>
+    [PublicAPI]
+    public static IServiceCollection AddDistributedPostgresCache(this IServiceCollection services,
+        Action<PostgresCacheOptions, IServiceProvider> configureOptions)
+    {
         services.AddOptions<PostgresCacheOptions>()
             .Configure(configureOptions)
             .ValidateOnStart();
