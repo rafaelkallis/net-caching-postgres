@@ -610,7 +610,7 @@
           "Microsoft.Extensions.TimeProvider.Testing": "[8.5.0, )",
           "Microsoft.NET.Test.Sdk": "[17.9.0, )",
           "NSubstitute": "[5.1.0, )",
-          "RafaelKallis.Extensions.Caching.Postgres": "[8.0.12, )",
+          "RafaelKallis.Extensions.Caching.Postgres": "[8.1.0, )",
           "System.Linq.Async": "[6.0.1, )",
           "Xunit.Combinatorial": "[1.6.24, )",
           "xunit": "[2.8.0, )"

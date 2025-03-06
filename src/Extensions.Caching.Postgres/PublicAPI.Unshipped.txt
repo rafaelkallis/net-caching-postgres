@@ -18,6 +18,10 @@ RafaelKallis.Extensions.Caching.Postgres.PostgresCache.RunGarbageCollection(Syst
 RafaelKallis.Extensions.Caching.Postgres.PostgresCache.Set(string! key, byte[]! value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions! options) -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCache.SetAsync(string! key, byte[]! value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions! options, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheExtensions
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.DataSource.get -> Npgsql.NpgsqlDataSource?
+RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.DataSource.set -> void
+static RafaelKallis.Extensions.Caching.Postgres.PostgresCacheExtensions.AddDistributedPostgresCache(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!, System.IServiceProvider!>! configureOptions) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static RafaelKallis.Extensions.Caching.Postgres.PostgresCacheExtensions.AddDistributedPostgresCache(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! configureOptions) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheMetrics.PostgresCacheMetrics(System.Diagnostics.Metrics.IMeterFactory! meterFactory, Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! options) -> void
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions
@@ -48,4 +52,3 @@ RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.UseUnloggedTable.g
 RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions.UseUnloggedTable.set -> void
 RafaelKallis.Extensions.Caching.Postgres.SqlQueries
 RafaelKallis.Extensions.Caching.Postgres.SqlQueries.SqlQueries(Microsoft.Extensions.Options.IOptions<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>! options) -> void
-static RafaelKallis.Extensions.Caching.Postgres.PostgresCacheExtensions.AddDistributedPostgresCache(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<RafaelKallis.Extensions.Caching.Postgres.PostgresCacheOptions!>? configureOptions = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

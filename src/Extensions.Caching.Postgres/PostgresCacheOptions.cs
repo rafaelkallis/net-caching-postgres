@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 
+using Npgsql;
+
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
 /// <summary>
@@ -7,6 +9,11 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 /// </summary>
 public class PostgresCacheOptions
 {
+    /// <summary>
+    /// The data source to the Postgres database.
+    /// </summary>
+    public NpgsqlDataSource? DataSource { get; set; }
+
     /// <summary>
     /// The connection string to the Postgres database.
     /// </summary>

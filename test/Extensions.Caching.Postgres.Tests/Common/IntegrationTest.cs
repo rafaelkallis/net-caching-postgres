@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 
+using Npgsql;
+
 namespace RafaelKallis.Extensions.Caching.Postgres.Tests.Common;
 
 public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture postgresFixture) : IAsyncLifetime, IClassFixture<PostgresFixture>
@@ -44,16 +46,17 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
         logging.AddFilter("RafaelKallis", LogLevel.Debug);
     }
 
-    protected virtual void ConfigureOptions(PostgresCacheOptions options)
+    protected virtual void ConfigureOptions(PostgresCacheOptions options, IServiceProvider serviceProvider)
     {
         ArgumentNullException.ThrowIfNull(options);
-        options.ConnectionString = PostgresFixture.ConnectionString;
+        options.DataSource = serviceProvider.GetRequiredService<NpgsqlDataSource>();
         options.EnableGarbageCollection = false;
     }
 
     protected virtual void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<TimeProvider>(FakeTimeProvider);
+        services.AddSingleton(_ => new NpgsqlDataSourceBuilder(PostgresFixture.ConnectionString).Build());
         services.AddDistributedPostgresCache(configureOptions: ConfigureOptions);
         services.AddControllers();
     }

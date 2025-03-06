@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>8.0.2</VersionPrefix>
+    <VersionPrefix>8.1.0</VersionPrefix>
     <AssemblyName>RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry</AssemblyName>
     <RootNamespace>RafaelKallis.Extensions.Caching.Postgres.OpenTelemetry</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Api" Version="1.8.1" />
+    <PackageReference Include="OpenTelemetry.Api" Version="1.11.2" />
   </ItemGroup>
   
   <ItemGroup>
