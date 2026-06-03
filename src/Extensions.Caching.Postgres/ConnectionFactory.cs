@@ -61,7 +61,8 @@ public sealed partial class ConnectionFactory : IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        if (_isDataSourceOwner){
+        if (_isDataSourceOwner)
+        {
             _dataSource.Dispose();
         }
     }

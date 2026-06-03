@@ -46,10 +46,10 @@ jobs:
           - 6432:6432
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         cache: true
         cache-dependency-path: '**/packages.lock.json'
@@ -70,7 +70,7 @@ jobs:
         --configuration Debug 
         --verbosity normal
         
-  release:
+  publish:
     needs: build
     runs-on: ubuntu-24.04
     if: >-
@@ -78,17 +78,22 @@ jobs:
         startsWith(github.ref, 'refs/heads/release/') ||
         startsWith(github.ref, 'refs/heads/hotfix/')
       )
+    permissions:
+      id-token: write
     environment: nuget.org
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore dependencies
+        run: dotnet restore --locked-mode
 
       - name: Pack
         run: >-
@@ -101,11 +106,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: nupkgs
+      
+      - name: Login
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ github.repository_owner }}
 
-      - name: Publish to nuget.org
+      - name: Publish
         run: >-
           dotnet nuget push "*.nupkg"
-          --api-key ${{ secrets.NUGET_ORG_API_KEY }} 
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }} 
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
         working-directory: nupkgs
