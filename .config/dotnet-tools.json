@@ -3,14 +3,14 @@
   "isRoot": true,
   "tools": {
     "husky": {
-      "version": "0.6.4",
+      "version": "0.9.1",
       "commands": [
         "husky"
       ],
       "rollForward": false
     },
     "dotnet-outdated-tool": {
-      "version": "4.6.7",
+      "version": "4.8.0",
       "commands": [
         "dotnet-outdated"
       ],

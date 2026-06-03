@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -21,7 +21,7 @@
 <!--    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>-->
     
     <Authors>Rafael Kallis</Authors>
-    <Copyright>Copyright 2024 (c) Rafael Kallis</Copyright>
+    <Copyright>Copyright 2026 (c) Rafael Kallis</Copyright>
     <Company>Rafael Kallis Consulting</Company>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>

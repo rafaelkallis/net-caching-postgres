@@ -16,7 +16,7 @@ jobs:
   build:
     strategy:
       matrix: 
-        postgres-version: [ 17, 16, 15, 14 ]
+        postgres-version: [ 18, 17, 16, 15 ]
     
     runs-on: ubuntu-24.04
     
@@ -35,7 +35,7 @@ jobs:
           - 5432:5432
            
       pgbouncer:
-        image: bitnami/pgbouncer:1.22.1
+        image: bitnamilegacy/pgbouncer:1.22.1
         env:
           POSTGRESQL_HOST: postgres
           POSTGRESQL_PASSWORD: postgres

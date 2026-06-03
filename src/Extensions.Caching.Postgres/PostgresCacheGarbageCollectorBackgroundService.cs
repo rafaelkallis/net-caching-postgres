@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace RafaelKallis.Extensions.Caching.Postgres;
 
-internal sealed class PostgresCacheGarbageCollectorBackgroundService(
+internal sealed partial class PostgresCacheGarbageCollectorBackgroundService(
     ILogger<PostgresCacheGarbageCollectorBackgroundService> logger,
     IServiceProvider serviceProvider,
     IOptions<PostgresCacheOptions> postgresCacheOptions,
@@ -32,7 +32,7 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
 #pragma warning restore CA5394 // Do not use insecure randomness
         }
         TimeSpan period = postgresCacheOptions.Value.GarbageCollectionInterval;
-        logger.LogDebug("Starting garbage collection timer: dueTime {DueTime}, period {Period}", dueTime, period);
+        LogStartingGarbageCollectionTimer(dueTime, period);
         _timer = timeProvider.CreateTimer(GarbageCollectionTimerCallback, state: stoppingToken, dueTime, period);
         stoppingToken.Register(StopTimer);
         return Task.CompletedTask;
@@ -78,4 +78,7 @@ internal sealed class PostgresCacheGarbageCollectorBackgroundService(
         _timer?.Dispose();
         _timer = null;
     }
+
+    [LoggerMessage(LogLevel.Debug, "Starting garbage collection timer: dueTime {DueTime}, period {Period}")]
+    private partial void LogStartingGarbageCollectionTimer(TimeSpan dueTime, TimeSpan period);
 }

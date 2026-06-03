@@ -10,7 +10,7 @@ namespace RafaelKallis.Extensions.Caching.Postgres.HealthChecks;
 /// <summary>
 /// Health check for Postgres Cache.
 /// </summary>
-public class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, IOptions<PostgresCacheHealthCheckOptions> options, IDistributedCache cache, TimeProvider timeProvider) : IHealthCheck
+public partial class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, IOptions<PostgresCacheHealthCheckOptions> options, IDistributedCache cache, TimeProvider timeProvider) : IHealthCheck
 {
     /// <inheritdoc />
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken)
@@ -20,7 +20,7 @@ public class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, 
         string key = $"HealthCheck:{start:O}";
         byte[] value = RandomNumberGenerator.GetBytes(16);
 
-        logger.LogDebug("Checking health of postgres cache: Key {Key}, Value {Value}", key, Convert.ToHexString(value));
+        LogCheckingHealth(key, Convert.ToHexString(value));
 
         DistributedCacheEntryOptions entryOptions = new()
         {
@@ -51,7 +51,7 @@ public class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, 
             }
 
             elapsed = timeProvider.GetUtcNow() - start;
-            logger.LogDebug("Postgres cache health check took {Elapsed}", elapsed);
+            LogHealthCheckElapsed(elapsed);
             if (elapsed >= options.Value.UnhealthyTimeout)
             {
                 return HealthCheckResult.Unhealthy("The cache response time is unhealthy.");
@@ -74,6 +74,11 @@ public class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, 
         {
             return HealthCheckResult.Unhealthy(ex.Message, ex);
         }
-
     }
+
+    [LoggerMessage(LogLevel.Debug, "Checking health of postgres cache: Key {Key}, Value {Value}")]
+    private partial void LogCheckingHealth(string key, string value);
+
+    [LoggerMessage(LogLevel.Debug, "Postgres cache health check took {Elapsed}")]
+    private partial void LogHealthCheckElapsed(TimeSpan elapsed);
 }
