@@ -21,8 +21,7 @@ public sealed partial class PostgresCache(
     PostgresCacheMetrics metrics,
     IOptions<PostgresCacheOptions> postgresCacheOptions,
     ConnectionFactory connectionFactory,
-    SqlQueries sqlQueries,
-    TimeProvider timeProvider)
+    SqlQueries sqlQueries)
     : IDistributedCache
 {
     private const string SqlStateTransactionRollbackPrefix = "40";
@@ -34,7 +33,7 @@ public sealed partial class PostgresCache(
     {
         using Activity? activity = PostgresCacheActivitySource.StartGetActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = Options.TimeProvider.GetUtcNow();
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
         string sql = sqlQueries.GetCacheEntry;
         if (!Options.UsePreparedStatements)
@@ -73,7 +72,7 @@ public sealed partial class PostgresCache(
     {
         using Activity? activity = PostgresCacheActivitySource.StartGetActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = Options.TimeProvider.GetUtcNow();
 
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
         await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);
@@ -123,7 +122,7 @@ public sealed partial class PostgresCache(
             absoluteExpirationRelativeToNow: options.AbsoluteExpirationRelativeToNow,
             slidingExpiration: options.SlidingExpiration);
         Stopwatch stopwatch = Stopwatch.StartNew();
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = Options.TimeProvider.GetUtcNow();
         ValidateOptions(options, now);
         TimeSpan? slidingExpiration = GetSlidingExpiration(options);
         DateTimeOffset? absoluteExpiration = GetAbsoluteExpiration(now, options);
@@ -167,7 +166,7 @@ public sealed partial class PostgresCache(
             absoluteExpirationRelativeToNow: options.AbsoluteExpirationRelativeToNow,
             slidingExpiration: options.SlidingExpiration);
         Stopwatch stopwatch = Stopwatch.StartNew();
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = Options.TimeProvider.GetUtcNow();
         ValidateOptions(options, now);
         TimeSpan? slidingExpiration = GetSlidingExpiration(options);
         DateTimeOffset? absoluteExpiration = GetAbsoluteExpiration(now, options);
@@ -210,7 +209,7 @@ public sealed partial class PostgresCache(
     {
         using Activity? activity = PostgresCacheActivitySource.StartRefreshActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = Options.TimeProvider.GetUtcNow();
         using NpgsqlConnection connection = connectionFactory.OpenConnection();
         string sql = sqlQueries.RefreshCacheEntry;
         if (!Options.UsePreparedStatements)
@@ -238,7 +237,7 @@ public sealed partial class PostgresCache(
     {
         using Activity? activity = PostgresCacheActivitySource.StartRefreshActivity(key);
         Stopwatch stopwatch = Stopwatch.StartNew();
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = Options.TimeProvider.GetUtcNow();
 
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(token).ConfigureAwait(false);
         await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);
@@ -331,7 +330,7 @@ public sealed partial class PostgresCache(
     {
         using Activity? activity = PostgresCacheActivitySource.StartGarbageCollectionActivity();
         Stopwatch stopwatch = Stopwatch.StartNew();
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = Options.TimeProvider.GetUtcNow();
         LogDeletingExpiredCacheEntries(logger);
         NpgsqlConnection connection = await connectionFactory.OpenConnectionAsync(ct).ConfigureAwait(false);
         await using ConfiguredAsyncDisposable _connCAD = connection.ConfigureAwait(false);

@@ -22,6 +22,7 @@ public sealed class PostgresCacheHealthCheckIntegrationTest(ITestOutputHelper ou
             {
                 options.DegradedTimeout = TimeSpan.FromSeconds(10);
                 options.UnhealthyTimeout = TimeSpan.FromSeconds(20);
+                options.TimeProvider = FakeTimeProvider;
             });
     }
 

@@ -20,6 +20,11 @@ public class PostgresCacheOptions
     public string? ConnectionString { get; set; }
 
     /// <summary>
+    /// The time provider to use for getting the current time.
+    /// </summary>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
+
+    /// <summary>
     /// The name of the postgres schema.
     /// </summary>
     public string SchemaName { get; set; } = PostgresCacheConstants.DefaultSchemaName;

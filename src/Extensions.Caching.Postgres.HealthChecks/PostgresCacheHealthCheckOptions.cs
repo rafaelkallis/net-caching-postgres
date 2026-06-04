@@ -17,4 +17,9 @@ public class PostgresCacheHealthCheckOptions
     /// The time after which the health check is considered unhealthy.
     /// </summary>
     public TimeSpan UnhealthyTimeout { get; set; } = DefaultUnhealthyTimeout;
+
+    /// <summary>
+    /// The time provider to use for getting the current time.
+    /// </summary>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 }

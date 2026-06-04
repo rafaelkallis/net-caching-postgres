@@ -31,7 +31,6 @@ public abstract class Benchmark
         IHostBuilder builder = Host.CreateDefaultBuilder();
         builder.ConfigureServices(services =>
         {
-            services.AddSingleton(TimeProvider.System);
             services.AddDistributedPostgresCache(options =>
             {
                 options.ConnectionString = _connectionString;

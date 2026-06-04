@@ -10,13 +10,15 @@ namespace RafaelKallis.Extensions.Caching.Postgres.HealthChecks;
 /// <summary>
 /// Health check for Postgres Cache.
 /// </summary>
-public partial class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, IOptions<PostgresCacheHealthCheckOptions> options, IDistributedCache cache, TimeProvider timeProvider) : IHealthCheck
+public partial class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> logger, IOptions<PostgresCacheHealthCheckOptions> options, IDistributedCache cache) : IHealthCheck
 {
+    private PostgresCacheHealthCheckOptions Options => options.Value;
+
     /// <inheritdoc />
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        DateTimeOffset start = timeProvider.GetUtcNow();
+        DateTimeOffset start = Options.TimeProvider.GetUtcNow();
         string key = $"HealthCheck:{start:O}";
         byte[] value = RandomNumberGenerator.GetBytes(16);
 
@@ -24,19 +26,19 @@ public partial class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> 
 
         DistributedCacheEntryOptions entryOptions = new()
         {
-            AbsoluteExpirationRelativeToNow = options.Value.UnhealthyTimeout,
+            AbsoluteExpirationRelativeToNow = Options.UnhealthyTimeout,
         };
         // using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         // cancellationToken = timeoutCts.Token;
         // timeoutCts.CancelAfter(options.Value.UnhealthyTimeout);
         try
         {
-            Task timeoutTask = Task.Delay(options.Value.UnhealthyTimeout, cancellationToken);
+            Task timeoutTask = Task.Delay(Options.UnhealthyTimeout, cancellationToken);
             Task setTask = cache.SetAsync(key, value, entryOptions, cancellationToken);
             await Task.WhenAny([setTask, timeoutTask]).ConfigureAwait(false);
 
-            TimeSpan elapsed = timeProvider.GetUtcNow() - start;
-            if (elapsed >= options.Value.UnhealthyTimeout)
+            TimeSpan elapsed = Options.TimeProvider.GetUtcNow() - start;
+            if (elapsed >= Options.UnhealthyTimeout)
             {
                 return HealthCheckResult.Unhealthy("The cache response time is unhealthy.");
             }
@@ -50,14 +52,14 @@ public partial class PostgresCacheHealthCheck(ILogger<PostgresCacheHealthCheck> 
                 return new(context.Registration.FailureStatus);
             }
 
-            elapsed = timeProvider.GetUtcNow() - start;
+            elapsed = Options.TimeProvider.GetUtcNow() - start;
             LogHealthCheckElapsed(elapsed);
-            if (elapsed >= options.Value.UnhealthyTimeout)
+            if (elapsed >= Options.UnhealthyTimeout)
             {
                 return HealthCheckResult.Unhealthy("The cache response time is unhealthy.");
             }
 
-            if (elapsed >= options.Value.DegradedTimeout)
+            if (elapsed >= Options.DegradedTimeout)
             {
                 return HealthCheckResult.Degraded("The cache response time is degraded.");
             }

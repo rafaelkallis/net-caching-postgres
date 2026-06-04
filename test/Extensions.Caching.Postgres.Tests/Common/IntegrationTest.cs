@@ -11,14 +11,15 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
     protected ITestOutputHelper Output { get; } = output;
     protected PostgresFixture PostgresFixture { get; } = postgresFixture;
 
+    protected FakeTimeProvider FakeTimeProvider { get; private set; } = null!;
     protected WebApplication WebApplication { get; private set; } = null!;
-    protected FakeTimeProvider FakeTimeProvider { get; private set; } = new();
     protected HttpClient Client { get; private set; } = null!;
     protected PostgresCache PostgresCache { get; private set; } = null!;
     protected PostgresCacheOptions PostgresCacheOptions { get; private set; } = null!;
 
     public virtual async Task InitializeAsync()
     {
+        FakeTimeProvider = new();
         WebApplicationBuilder webApplicationBuilder = WebApplication.CreateBuilder();
         webApplicationBuilder.WebHost.UseTestServer();
         ConfigureLogging(webApplicationBuilder.Logging);
@@ -51,11 +52,11 @@ public abstract class IntegrationTest(ITestOutputHelper output, PostgresFixture 
         ArgumentNullException.ThrowIfNull(options);
         options.DataSource = serviceProvider.GetRequiredService<NpgsqlDataSource>();
         options.EnableGarbageCollection = false;
+        options.TimeProvider = FakeTimeProvider;
     }
 
     protected virtual void ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton<TimeProvider>(FakeTimeProvider);
         services.AddSingleton(_ => new NpgsqlDataSourceBuilder(PostgresFixture.ConnectionString).Build());
         services.AddDistributedPostgresCache(configureOptions: ConfigureOptions);
         services.AddControllers();

@@ -43,8 +43,6 @@ public static class PostgresCacheExtensions
             .Configure(configureOptions)
             .ValidateOnStart();
 
-        services.TryAddSingleton(TimeProvider.System);
-
         services.AddSingleton<PostgresCacheMetrics>();
         services.AddSingleton<SqlQueries>();
         services.AddSingleton<ConnectionFactory>();

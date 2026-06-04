@@ -11,11 +11,11 @@ namespace RafaelKallis.Extensions.Caching.Postgres;
 internal sealed partial class PostgresCacheGarbageCollectorBackgroundService(
     ILogger<PostgresCacheGarbageCollectorBackgroundService> logger,
     IServiceProvider serviceProvider,
-    IOptions<PostgresCacheOptions> postgresCacheOptions,
-    TimeProvider timeProvider)
+    IOptions<PostgresCacheOptions> postgresCacheOptions)
     : BackgroundService
 {
     private ITimer? _timer;
+    private PostgresCacheOptions Options => postgresCacheOptions.Value;
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -25,29 +25,26 @@ internal sealed partial class PostgresCacheGarbageCollectorBackgroundService(
         }
 
         TimeSpan dueTime = TimeSpan.Zero;
-        if (postgresCacheOptions.Value.UncorrelateGarbageCollection)
+        if (Options.UncorrelateGarbageCollection)
         {
 #pragma warning disable CA5394 // Do not use insecure randomness
-            dueTime = Random.Shared.NextInt64(postgresCacheOptions.Value.GarbageCollectionInterval.ToMilliseconds()).AsMillisecondsTimeSpan();
+            dueTime = Random.Shared.NextInt64(Options.GarbageCollectionInterval.ToMilliseconds()).AsMillisecondsTimeSpan();
 #pragma warning restore CA5394 // Do not use insecure randomness
         }
-        TimeSpan period = postgresCacheOptions.Value.GarbageCollectionInterval;
+        TimeSpan period = Options.GarbageCollectionInterval;
         LogStartingGarbageCollectionTimer(dueTime, period);
-        _timer = timeProvider.CreateTimer(GarbageCollectionTimerCallback, state: stoppingToken, dueTime, period);
+        _timer = Options.TimeProvider.CreateTimer(_ => GarbageCollectionTimerCallback(stoppingToken), state: null, dueTime, period);
         stoppingToken.Register(StopTimer);
         return Task.CompletedTask;
     }
 
-    private async void GarbageCollectionTimerCallback(object? state)
+    private async void GarbageCollectionTimerCallback(CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(state);
-        CancellationToken ct = (CancellationToken)state;
-        if (!postgresCacheOptions.Value.EnableGarbageCollection)
+        if (!Options.EnableGarbageCollection)
         {
             logger.LogDebug("Garbage collection is disabled");
             return;
         }
-        using Activity activity = new(nameof(GarbageCollectionTimerCallback));
         try
         {
             AsyncServiceScope asyncServiceScope = serviceProvider.CreateAsyncScope();
